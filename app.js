@@ -29,6 +29,9 @@ app.set('view engine','pug');
 app.use(bodyParser.urlencoded({ extended: false}))
 app.use(bodyParser.json())
 
+//set public folder
+app.use(express.static(path.join(__dirname, 'public')));
+
 //express session middleware
 app.use(session({
     secret: 'appetito',
