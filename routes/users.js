@@ -46,26 +46,22 @@ router.post('/register', function(req,res){
             // email must be a valid email string
             email_id: Joi.string().email().required(),
 
-            // phone is required
-            // and must be a string of the format XXX-XXX-XXXX
+            // phone number is required
             // where X is a digit (0-9)
-            mobile: Joi.string().regex(/^\d{3}-\d{3}-\d{4}$/).required(),
+            mobile: Joi.string().length(10).required(),
 
             // birthday is not required
             // birthday must be a valid ISO-8601 date
-            // dates before Jan 1, 2014 are not allowed
-            dob: Joi.date().max('1-1-2004').iso(),
+            dob: Joi.date().iso(),
 
             pass: Joi.string().min(7).required().strict(),
             confirm_pass: Joi.string().valid(Joi.ref('pass')).required().strict(),
-            address: Joi.string().required()
-
+            address: Joi.string().required(),
         });
 
         // validate the request data against the schema
         var valid = Joi.validate(data, schema);
-        valid.then((value) => {
-            
+        valid.then(function(value) {
             let newUser = new User({
                 first_name: value.first_name,
                 last_name: value.last_name,
@@ -93,12 +89,11 @@ router.post('/register', function(req,res){
                 })
             });
         })
-        .catch((err) => {
+        .catch(function(err) {
                 // send a 422 error response if validation fails
                 res.status(422).json({
-                    status: 'error',
+                    status: err,
                     message: 'Invalid request data',
-                    data: value
                 });
         });
     });
