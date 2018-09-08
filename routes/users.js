@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const Joi = require('joi');
+const jwt = require('jsonwebtoken');
 
 let User = require('../models/user');
 
@@ -101,5 +102,91 @@ router.post('/register', function(req,res){
 router.get('/login', function(req,res){
     res.render('login');
 });
+
+router.post('/login', function(req,res){
+    const query = {mobile: req.body.mobile};
+    User.findOne(query, function(err, user){
+        if(err) {
+            res.json({
+                message: err
+            });
+        }
+        if(!user) {
+            res.json({
+            message: 'User doesn\'t exists'
+            });
+        } else {
+            //match password
+            bcrypt.compare(req.body.pass, user.pass, function(err, isMatch){
+                if(err) {
+                    res.json({
+                        message: err
+                    });
+                }
+                if(isMatch) {
+                    const user1 = {
+                        mobile: user.mobile,
+                        email_id: user.email_id
+                    }
+                    jwt.sign({user: user1}, 'appetitoSecret', { expiresIn: '60s'} ,(err, token) => {
+                        res.json({
+                            message: 'Logged In',
+                            token: token
+                        });
+                    });
+                    
+                } else {
+                    res.json({
+                        message: 'Password is Wrong'
+                    });
+                }
+            });
+        }
+    });
+});
+
+//verifyToken is a middleware function
+router.post('/home', verifyToken, function(req,res){
+    jwt.verify(req.token, 'appetitoSecret', function(err, authData){
+        console.log('h');
+        if(err){
+            console.log(err);
+            res.sendStatus(403);
+        } else {
+            res.json({
+                message: 'Welcome..',
+                authData: authData
+            });
+        }
+    });
+});
+
+//Format of Token
+//Authorization: Token <access_token>
+
+//verify token
+function verifyToken(req, res, next){
+    //get the auth header
+    const tokenHeader = req.headers['authorization'];
+    //check is token is undefined.
+    console.log(tokenHeader);
+    if(typeof tokenHeader !== 'undefined'){
+        //split at the space
+        const split = tokenHeader.split(' '); 
+        //get token from array
+        const token = split[1];
+        //set the token
+        req.token = token;
+        console.log(token);
+        //next middleware
+        next();
+    } else {
+        //Forbidden
+        res.sendStatus(403);
+        res.json({
+            message: 'Forbidden'
+        });
+    }
+}
 
 module.exports = router;
