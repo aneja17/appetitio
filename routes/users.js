@@ -81,7 +81,9 @@ router.post('/register', function(req,res){
                     newUser.pass = hash;
                     newUser.save(function(err){
                         if(err){
-                            console.log(err);
+                            res.json({
+                                message: err
+                            });
                             return;
                         } else{
                             res.redirect('/users/login');
