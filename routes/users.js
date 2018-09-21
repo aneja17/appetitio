@@ -3,13 +3,14 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const Joi = require('joi');
 const jwt = require('jsonwebtoken');
+const User = require('../models/user');
+const app = require('../app');
+const passport = require('../config/passport');
 
-let User = require('../models/user');
-
-//register form
-router.get('/register', function(req,res){
-    res.render('register');
-});
+// //register form
+// router.get('/register', function(req,res){
+//     res.render('register');
+// });
 
 //register process
 router.post('/register', function(req,res){
@@ -35,7 +36,8 @@ router.post('/register', function(req,res){
 
         // let errors = req.validationErrors();
 
-        const data = req.body;
+        var data = req.body;
+        var today = new Date();
 
         // define the validation schema
         const schema = Joi.object().keys({
@@ -45,11 +47,11 @@ router.post('/register', function(req,res){
             last_name: Joi.string().required(),
             // email is required
             // email must be a valid email string
-            email_id: Joi.string().email().required(),
+            email: Joi.string().email().required(),
 
             // phone number is required
             // where X is a digit (0-9)
-            mobile: Joi.string().length(10).required(),
+            mobile: Joi.number().length(10).required(),
 
             // birthday is not required
             // birthday must be a valid ISO-8601 date
@@ -57,40 +59,127 @@ router.post('/register', function(req,res){
 
             pass: Joi.string().min(7).required().strict(),
             confirm_pass: Joi.string().valid(Joi.ref('pass')).required().strict(),
+            latitude: Joi.number().min(-90).max(90).required(),
+            longitude: Joi.number().min(-180).max(180).required(),
             address: Joi.string().required(),
+            fb_social_id: Joi.number().max(15),
+            fb_access_token: Joi.string().alphanum(),
         });
-
         // validate the request data against the schema
         var valid = Joi.validate(data, schema);
         valid.then(function(value) {
-            let newUser = new User({
-                first_name: value.first_name,
-                last_name: value.last_name,
-                email_id: value.email_id,
-                mobile: value.mobile,
-                dob: value.dob,
-                pass: value.pass,
-                address: value.address
-            });
+            if(value.fb_social_id && value.fb_access_token){
+                let check = app.db.query('SELECT * FROM users WHERE fb_social_id = SET ?', value.fb_social_id);
+                check.then(function(err, user){
+                    if(err){
+                        throw err;
+                    } else if(user){
+                        if(user.fb_access_token === value.fb_access_token){
+                            var User = {
+                                first_name: value.first_name,
+                                last_name: value.last_name,
+                                email: value.email,
+                                mobile: value.mobile,
+                                dob: value.dob,
+                                pass: value.pass,
+                                latitude: value.latitude,
+                                longitude: value.longitude,
+                                address: value.address,
+                                fb_social_id: value.fb_social_id,
+                                fb_access_token: value.fb_access_token,
+                                creation: today,
+                                updation: today,
+                            };
+                            bcrypt.genSalt(10, function(err, salt){
+                                bcrypt.hash(User.pass, salt, function(err, hash){
+                                    if(err){
+                                        console.log(err);
+                                    } else{
+                                        User.pass = hash;
+                                        let query = app.db.query('UPDATE users SET ? WHERE fb_social_id = :fb_social_id', User);
+                                        query.then(function(err) {
+                                            if(err){
+                                                res.json({
+                                                message: err
+                                                });
+                                                return;
+                                            } else{
+                                                res.json({
+                                                    message: 'User details updated'
+                                                });
+                                            }
+                
+                                        });
+                                        // newUser.save(function(err){
+                                        //     if(err){
+                                        //         res.json({
+                                        //             message: err
+                                        //         });
+                                        //         return;
+                                        //     } else{
+                                        //         res.redirect('/users/login');
+                                        //     }
+                                        // });
+                                    }
+                                });
+                            });
+                        } else {
+                            res.json({
+                                message: 'Wrong fb credentials'
+                            });
+                        }
+                    }
+                });    
+            } else {
+                var newUser = {
+                    first_name: value.first_name,
+                    last_name: value.last_name,
+                    email: value.email,
+                    mobile: value.mobile,
+                    dob: value.dob,
+                    pass: value.pass,
+                    latitude: value.latitude,
+                    longitude: value.longitude,
+                    address: value.address,
+                    creation: today,
+                    updation: today,
+                }
+            let sql = 'INSERT INTO users SET ?';
 
             bcrypt.genSalt(10, function(err, salt){
                 bcrypt.hash(newUser.pass, salt, function(err, hash){
                     if(err){
                         console.log(err);
-                    }
-                    newUser.pass = hash;
-                    newUser.save(function(err){
-                        if(err){
-                            res.json({
+                    } else{
+                        newUser.pass = hash;
+                        let query = app.db.query(sql, newUser);
+                        query.then(function(err) {
+                            if(err){
+                                res.json({
                                 message: err
-                            });
-                            return;
-                        } else{
-                            res.redirect('/users/login');
-                        }
-                    });
-                })
+                                });
+                                return;
+                            } else{
+                                res.json({
+                                    message: 'User registered Successfully'
+                                });
+                            }
+
+                        });
+                        // newUser.save(function(err){
+                        //     if(err){
+                        //         res.json({
+                        //             message: err
+                        //         });
+                        //         return;
+                        //     } else{
+                        //         res.redirect('/users/login');
+                        //     }
+                        // });
+                    }
+                });
             });
+            }
         })
         .catch(function(err) {
                 // send a 422 error response if validation fails
@@ -100,26 +189,98 @@ router.post('/register', function(req,res){
                 });
         });
     });
+// Redirect the user to Facebook for authentication.  When complete,
+// Facebook will redirect the user back to the application at
+//     /auth/facebook/callback
+router.get('/auth/facebook', passport.authenticate('facebook', { 
+    scope : ['public_profile', 'email', 'birthday']
+  }));
+// Facebook will redirect the user to this URL after approval.  Finish the
+// authentication process by attempting to obtain an access token.  If
+// access was granted, the user will be logged in.  Otherwise,
+// authentication has failed.
+router.get('/auth/facebook/callback',
+    passport.authenticate('facebook', { 
+        successRedirect : '/register', 
+        failureRedirect: '/register' 
+    }),
+    function(req, res) {
+        res.json({
+            first_name: User.fbDetails.first_name,
+            last_name: User.fbDetails.last_name,
+            email: User.fbDetails.email,
+            dob: User.fbDetails.dob,
+            fb_social_id: User.fbDetails.fb_social_id,
+            fb_access_token: User.fbDetails.fb_access_token,
+        });
+    });
 
-router.get('/login', function(req,res){
-    res.render('login');
+router.post('/emailverfication', function(req,res){
+    
 });
 
+router.post('/otpverfication', function(req,res){
+    
+});
+// router.get('/login', function(req,res){
+//     res.render('login');
+// });
+
 router.post('/login', function(req,res){
-    const query = {mobile: req.body.mobile};
-    User.findOne(query, function(err, user){
+    // const query = {mobile: req.body.mobile};
+    // User.findOne(query, function(err, user){
+        // if(err) {
+        //     res.json({
+        //         message: err
+        //     });
+        // }
+        // if(!user) {
+        //     res.json({
+        //     message: 'User doesn\'t exists'
+        //     });
+        // } else {
+        //     //match password
+        //     bcrypt.compare(req.body.pass, user.pass, function(err, isMatch){
+        //         if(err) {
+        //             res.json({
+        //                 message: err
+        //             });
+        //         }
+        //         if(isMatch) {
+        //             const user1 = {
+        //                 mobile: user.mobile,
+        //                 email_id: user.email_id
+        //             }
+        //             jwt.sign({user: user1}, 'appetitoSecret', { expiresIn: '60s'} ,(err, token) => {
+        //                 res.json({
+        //                     message: 'Logged In',
+        //                     token: token
+        //                 });
+        //             });
+                    
+        //         } else {
+        //             res.json({
+        //                 message: 'Password is Wrong'
+        //             });
+        //         }
+        //     });
+        // }
+    // });
+    let mobile = req.body.mobile;
+    let query = app.db.query('SELECT * FROM users WHERE mobile = ?', mobile);
+    query.then(function(err, results){
         if(err) {
             res.json({
                 message: err
             });
         }
-        if(!user) {
+        if(!results.length>0) {
             res.json({
             message: 'User doesn\'t exists'
             });
         } else {
             //match password
-            bcrypt.compare(req.body.pass, user.pass, function(err, isMatch){
+            bcrypt.compare(req.body.pass, results[0].pass, function(err, isMatch){
                 if(err) {
                     res.json({
                         message: err
@@ -127,8 +288,8 @@ router.post('/login', function(req,res){
                 }
                 if(isMatch) {
                     const user1 = {
-                        mobile: user.mobile,
-                        email_id: user.email_id
+                        mobile: results[0].mobile,
+                        email: results[0].email
                     }
                     jwt.sign({user: user1}, 'appetitoSecret', { expiresIn: '60s'} ,(err, token) => {
                         res.json({
@@ -170,7 +331,7 @@ router.post('/home', verifyToken, function(req,res){
 function verifyToken(req, res, next){
     //get the auth header
     const tokenHeader = req.headers['authorization'];
-    //check is token is undefined.
+    //check if token is undefined.
     console.log(tokenHeader);
     if(typeof tokenHeader !== 'undefined'){
         //split at the space

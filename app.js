@@ -1,33 +1,48 @@
 const express = require('express');
-const bodyParser = require('body-parser')
+const bodyParser = require('body-parser');
 //path is core module included in nodejs
 const path = require('path');
-const mongoose = require('mongoose');
+const mysql = require('mysql');
+// const mongoose = require('mongoose');
 // const expressValidator = require('express-validator');
-const flash = require('connect-flash');
+// const flash = require('connect-flash');
 const session = require('express-session');
 //connect database to mongoose
-mongoose.connect('mongodb://localhost/nodekb');
-let db = mongoose.connection;
+// mongoose.connect('mongodb://localhost/nodekb');
+// let db = mongoose.connection;
+
 //init app
 const app = express();
-
-//check db connection
-db.once('open', function(){
-    console.log('Connected to MongoDB');
-})
-//check for database errors
-db.on('error', function(err){
-    console.log(err);
+const db = mysql.createConnection({
+    host     : 'localhost',
+    user     : 'root',
+    password : 'Anmol@123',
+    database : 'appetito_db'
+  });
+   
+db.connect(function(err){
+    if(err) throw err;
+    console.log('COnencted to MySql');
 });
+
+db.query()
+
+// //check db connection
+// db.once('open', function(){
+//     console.log('Connected to MongoDB');
+// });
+// //check for database errors
+// db.on('error', function(err){
+//     console.log(err);
+// });
 
 //load view engine
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine','pug');
 
 //body-parser middleware
-app.use(bodyParser.urlencoded({ extended: false}))
-app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false}));
+app.use(bodyParser.json());
 
 //set public folder
 app.use(express.static(path.join(__dirname, 'public')));
@@ -65,11 +80,14 @@ app.use(session({
 //     }
 // }));
 
-let users = require('./routes/users')
+let users = require('./routes/users');
 app.use('/users', users);
 
 //start server
 app.listen(3000, function(){
     console.log('Server started at 3000');
 });
-module.exports = app;
+module.exports = {
+    app,
+    db
+};
