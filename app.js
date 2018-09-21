@@ -2,33 +2,30 @@ const express                               = require('express');
 const bodyParser                            = require('body-parser');
 const mysql                                 = require('mysql');
 const session                               = require('express-session');
-
+                                              require('dotenv').config({path: 'C:\\Users\\lappy\\Api\\nodekb\\.env'});
 //init app
 const app                                   = express();
 const db                                    = mysql.createConnection({
-    host                                    : 'localhost',
-    user                                    : 'root',
-    password                                : 'Anmol@123',
-    database                                : 'appetito_db'
+    host                                    : process.env.DB_HOST,
+    user                                    : process.env.DB_USER,
+    password                                : process.env.DB_PASSWORD,
+    database                                : process.env.DB_NAME
   });
    
 db.connect(function(err){
     if(err) throw err;
-    console.log('COnencted to MySql');
+    console.log('Connected to MySql');
 });
 
 //body-parser middleware
 app.use(bodyParser.urlencoded({ extended: false}));
 app.use(bodyParser.json());
 
-//set public folder
-app.use(express.static(path.join(__dirname, 'public')));
-
 //express session middleware
 app.use(session({
     secret                                  : 'appetito',
     resave                                  : true,
-    saveUninitialized                       :true,
+    saveUninitialized                       : true,
     // cookie: { secure: true }
 }));
 
@@ -36,7 +33,7 @@ let users = require('./routes/users');
 app.use('/users', users);
 
 //start server
-app.listen(3000, function(){
+app.listen(process.env.SERVER_PORT, function(){
     console.log('Server started at 3000');
 });
 module.exports                              = {
