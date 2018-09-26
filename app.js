@@ -23,7 +23,7 @@ app.use(bodyParser.json());
 
 //express session middleware
 app.use(session({
-    secret                                  : 'appetito',
+    secret                                  : process.env.SESSION_SECRET,
     resave                                  : true,
     saveUninitialized                       : true,
     // cookie: { secure: true }
@@ -37,6 +37,5 @@ app.listen(process.env.SERVER_PORT, function(){
     console.log('Server started at 3000');
 });
 module.exports                              = {
-    app,
     db
 };
