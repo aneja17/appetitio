@@ -138,119 +138,145 @@ router.post('/otpverfication', function (req, res) {
   });
 });
 
-router.post('/emailauthentication', function (req, res) {
-  let email = req.body.email;
-  let resetCode = req.body.reset_code;
-  let sql = 'SELECT reset_code FROM users WHERE email = ?';
-  let query = sqlQuery(sql, email);
-  query.then(function (err, result) {
-    if (err) {
-      res.json({
-        ResponseMsg: 'Email doesn\'t exists',
-        ResponseFlag: 'F'
-      });
-    } else {
-      if (result[0].reset_code === resetCode) {
-        let setVerified = {
-          is_email_verified: 1
-        };
-        let sql1 = 'UPDATE users SET ? WHERE reset_code = ?';
-        let query1 = sqlQuery(sql1, [setVerified, resetCode]);
-        query1.then(function (err) {
-          if (err) {
-            res.json({
-              ResponseMsg: err,
-              ResponseFlag: 'F'
-            });
-          } else {
-            res.json({
-              ResponseMsg: 'Email verified',
-              ResponseFlag: 'S'
-            });
-          }
+router.post('/emailauthentication', function(req,res){
+    let data = req.body;
+    let emailAuthSchema = Joi.object().keys({
+        email : Joi.string().email().required(),
+        reset_code : Joi.string().alphanum().strict().required()
+    });
+    let valid = Joi.validate(data, emailAuthSchema);
+    valid.then(function(value){
+        let sql = 'SELECT reset_code FROM users WHERE email = ?';
+        let query = sqlQuery(sql, data.email);
+        query.then(function(err, result){
+            if(err){
+                res.json({
+                    ResponseMsg: 'Email doesn\'t exists',
+                    ResponseFlag: 'F'
+                });
+            } else {
+                if(result[0].reset_code === data.reset_code){
+                    let setVerified = {
+                        is_email_verified : 1
+                    };
+                    let sql1 = 'UPDATE users SET ? WHERE reset_code = ?';
+                    let query1 = sqlQuery(sql1, [setVerified, data.reset_code]);
+                    query1.then(function(err){
+                        if(err){
+                            res.json({
+                                ResponseMsg     : err,
+                                ResponseFlag    : 'F'
+                            });
+                        } else {
+                            res.json({
+                                ResponseMsg: 'Email verified',
+                                ResponseFlag: 'S'
+                            });
+                        }
+                    });
+                } else {
+                    res.json({
+                        ResponseMsg: 'Wrong Email Code. Try Again',
+                        ResponseFlag: 'F'
+                    });
+                }
+            }
         });
-      } else {
-        res.json({
-          ResponseMsg: 'Wrong Email Code. Try Again',
-          ResponseFlag: 'F'
+    }).catch(function(err) {
+                // send a 422 error response if validation fails
+                res.status(422).json({
+                    status                      : err,
+                    ResponseMsg                 : 'Invalid request data',
+                    ResponseFlag                : 'F'
+                });
         });
-      }
-    }
-  });
 });
 
-router.post('/otpauthentication', function (req, res) {
-  let mobile = req.body.mobile;
-  let otp = req.body.otp;
-  let sql = 'SELECT otp FROM users WHERE mobile = ?';
-  let query = sqlQuery(sql, mobile);
-  query.then(function (err, result) {
-    if (err) {
-      res.json({
-        ResponseMsg: 'Mobile number doesn\'t exists',
-        ResponseFlag: 'F'
-      });
-    } else {
-      if (result[0].otp === otp) {
-        let setVerified = {
-          is_phone_verified: 1
-        };
-        let sql1 = 'UPDATE users SET ? WHERE otp = ?';
-        let query1 = sqlQuery(sql1, [setVerified, otp]);
-        query1.then(function (err) {
-          if (err) {
-            res.json({
-              ResponseMsg: err,
-              ResponseFlag: 'F'
-            });
-          } else {
-            res.json({
-              ResponseMsg: 'OTP verified',
-              ResponseFlag: 'S'
-            });
-          }
-        });
-      } else {
-        let sql2 = 'SELECT number_of_retries FROM users WHERE otp = ?';
-        let query2 = sqlQuery(sql2, otp);
-        query2.then(function (err, result) {
-          if (err) {
-            res.json({
-              ResponseMsg: err,
-              ResponseFlag: 'F'
-            });
-          } else {
-            let tried = result[0].number_of_retries;
-            if (tried > 0) {
-              tried = tried - 1;
-              let exp = {
-                number_of_retries: tried
-              }
-              let sql3 = 'UPDATE users SET ? WHERE otp = ?';
-              let query3 = sqlQuery(sql3, [exp, otp]);
-              query3.then(function (err) {
-                if (err) {
-                  res.json({
-                    ResponseMsg: err,
+router.post('/otpauthentication', function(req,res){
+    let data = req.body;
+    let otpAuthSchema = Joi.object().keys({
+        mobile : Joi.number().required(),
+        otp : Joi.number().strict().required()
+    });
+    let valid = Joi.validate(data, otpAuthSchema);
+    valid.then(function(value){
+        let sql = 'SELECT otp FROM users WHERE mobile = ?';
+        let query = sqlQuery(sql, data.mobile);
+        query.then(function(err, result){
+            if(err){
+                res.json({
+                    ResponseMsg: 'Mobile number doesn\'t exists',
                     ResponseFlag: 'F'
-                  });
-                }
-              });
+                });
             } else {
-              res.json({
-                ResponseMsg: 'All wrong attempts. Kindly click on reset code or try again later',
-                ResponseFlag: 'F'
-              });
+                if(result[0].otp === data.otp){
+                    let setVerified = {
+                        is_phone_verified : 1
+                    };
+                    let sql1 = 'UPDATE users SET ? WHERE otp = ?';
+                    let query1 = sqlQuery(sql1, [setVerified, data.otp]);
+                    query1.then(function(err){
+                        if(err){
+                            res.json({
+                                ResponseMsg     : err,
+                                ResponseFlag    : 'F'
+                            });
+                        } else {
+                            res.json({
+                                ResponseMsg: 'OTP verified',
+                                ResponseFlag: 'S'
+                            });
+                        }
+                    });
+                } else {
+                    let sql2 = 'SELECT number_of_retries FROM users WHERE otp = ?';
+                    let query2 = sqlQuery(sql2, data.otp);
+                    query2.then(function(err, result){
+                        if(err){
+                            res.json({
+                                ResponseMsg     : err,
+                                ResponseFlag    : 'F'
+                            });
+                        } else {
+                            let tried = result[0].number_of_retries;
+                            if(tried > 0){
+                                tried = tried-1;
+                                let exp = {
+                                    number_of_retries: tried
+                                }
+                                let sql3 = 'UPDATE users SET ? WHERE otp = ?';
+                                let query3 = sqlQuery(sql3, [exp, data.otp]);
+                                query3.then(function(err){
+                                    if(err){
+                                        res.json({
+                                            ResponseMsg: err,
+                                            ResponseFlag: 'F'
+                                        });
+                                    }
+                                });
+                            } else {
+                                res.json({
+                                    ResponseMsg: 'All wrong attempts. Kindly click on reset code or try again later',
+                                    ResponseFlag: 'F'
+                                });
+                            }
+                        }
+                    });
+                    res.json({
+                        ResponseMsg: 'Wrong OTP. Kindly enter again',
+                        ResponseFlag: 'F'
+                    });
+                }
             }
-          }
         });
-        res.json({
-          ResponseMsg: 'Wrong OTP. Kindly enter again',
-          ResponseFlag: 'F'
-        });
-      }
-    }
-  });
+    }).catch(function(err) {
+            // send a 422 error response if validation fails
+            res.status(422).json({
+                status                      : err,
+                ResponseMsg                 : 'Invalid request data',
+                ResponseFlag                : 'F'
+            });
+    });
 });
 
 router.post('/login', function (req, res) {
@@ -367,6 +393,47 @@ router.post('/login', function (req, res) {
   }
 });
 
+router.post('/changepassword', function(req,res){
+    let mobile = req.body.mobile;
+    let password = req.body.pass;
+    let data = req.body;
+    const passSchema = Joi.object().keys({
+        mobile                          : Joi.number().required(),
+        pass                            : Joi.string().min(7).strict(),
+        confirm_pass                    : Joi.string().valid(Joi.ref('pass')).strict(),
+    });
+
+    let valid = Joi.validate(data, passSchema);
+    valid.then(function(value){
+        let newPassword = {
+            pass : password
+        };
+        let sql1 = 'UPDATE users SET ? WHERE mobile = ?';
+        let query1 = sqlQuery(sql1, [newPassword, mobile]);
+        query1.then(function(err){
+            if(err){
+                res.json({
+                    ResponseMsg     : err,
+                    ResponseFlag    : 'F'
+                });
+            } else {
+                res.json({
+                    ResponseMsg: 'Password Updated',
+                    ResponseFlag: 'S'
+                });
+            }
+        });
+    }).catch(function(err) {
+        // send a 422 error response if validation fails
+        res.status(422).json({
+            status                      : err,
+            ResponseMsg                 : 'Invalid request data',
+            ResponseFlag                : 'F'
+        });
+    });;
+});
+
+
 router.post('/logout', function (req, res) {
   let email = req.body.email;
   let today = new Date();
@@ -455,6 +522,30 @@ router.post('/home', verifyToken, function (req, res) {
       });
     }
   });
+});
+
+router.post('/fetchprofile', function(req,res){
+
+});
+
+router.post('/updateprofile', function(req,res){
+    
+});
+
+router.post('/myvisits', function(req,res){
+    
+});
+
+router.post('/mybookings', function(req,res){
+    
+});
+
+router.post('/host', function(req,res){
+    
+});
+
+router.post('/book', function(req,res){
+    
 });
 
 function randomString(length, chars) {
