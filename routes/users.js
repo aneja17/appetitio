@@ -103,9 +103,9 @@ router.post('/register', function (req, res) {
 
 router.get('/emailverfication', function (req, res) {
   let email = req.body.email;
-  let rString = randomString(32, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  let eString = emailGenerator(32, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
   let Emaildetails = {
-    reset_code: rString,
+    reset_code: eString,
   }
   let sql = 'UPDATE users SET ? WHERE email = ?';
   let query = sqlQuery(sql, [Emaildetails, email]);
@@ -121,9 +121,9 @@ router.get('/emailverfication', function (req, res) {
 
 router.post('/otpverfication', function (req, res) {
   let mobile = req.body.mobile;
-  let rNumber = randomNumber();
+  let oNumber = otpGenerator();
   let OTPdetails = {
-    otp: rNumber,
+    otp: oNumber,
     number_of_retries: 3
   }
   let sql = 'UPDATE users SET ? WHERE mobile = ?';
@@ -147,7 +147,7 @@ router.post('/emailauthentication', function(req,res){
     let valid = Joi.validate(data, emailAuthSchema);
     valid.then(function(value){
         let sql = 'SELECT reset_code FROM users WHERE email = ?';
-        let query = sqlQuery(sql, data.email);
+        let query = sqlQuery(sql, [data.email]);
         query.then(function(err, result){
             if(err){
                 res.json({
@@ -201,7 +201,7 @@ router.post('/otpauthentication', function(req,res){
     let valid = Joi.validate(data, otpAuthSchema);
     valid.then(function(value){
         let sql = 'SELECT otp FROM users WHERE mobile = ?';
-        let query = sqlQuery(sql, data.mobile);
+        let query = sqlQuery(sql, [data.mobile]);
         query.then(function(err, result){
             if(err){
                 res.json({
@@ -230,7 +230,7 @@ router.post('/otpauthentication', function(req,res){
                     });
                 } else {
                     let sql2 = 'SELECT number_of_retries FROM users WHERE otp = ?';
-                    let query2 = sqlQuery(sql2, data.otp);
+                    let query2 = sqlQuery(sql2, [data.otp]);
                     query2.then(function(err, result){
                         if(err){
                             res.json({
@@ -288,7 +288,8 @@ router.post('/login', function (req, res) {
     });
     let valid = Joi.validate(req.body, loginSchema);
     valid.then(function (value) {
-      let query = sqlQuery('SELECT * FROM users WHERE mobile = ?', mobile);
+      let sql = 'SELECT * FROM users WHERE mobile = ?';
+      let query = sqlQuery(sql, [mobile]);
       query.then(function (err, results) {
         if (err) {
           res.json({
@@ -347,7 +348,8 @@ router.post('/login', function (req, res) {
     request(options)
       .then(fbRes => {
         if (fbRes.email === req.body.email) {
-          let query = sqlQuery('SELECT * FROM users WHERE email = ?', req.body.email);
+          let sql = 'SELECT * FROM users WHERE email = ?';
+          let query = sqlQuery(sql, [req.body.email]);
           query.then(function (err, results) {
             if (err) {
               res.json({
@@ -408,9 +410,9 @@ router.post('/changepassword', function(req,res){
         let newPassword = {
             pass : password
         };
-        let sql1 = 'UPDATE users SET ? WHERE mobile = ?';
-        let query1 = sqlQuery(sql1, [newPassword, mobile]);
-        query1.then(function(err){
+        let sql = 'UPDATE users SET ? WHERE mobile = ?';
+        let query = sqlQuery(sql, [newPassword, mobile]);
+        query.then(function(err){
             if(err){
                 res.json({
                     ResponseMsg     : err,
@@ -430,7 +432,7 @@ router.post('/changepassword', function(req,res){
             ResponseMsg                 : 'Invalid request data',
             ResponseFlag                : 'F'
         });
-    });;
+    });
 });
 
 
@@ -445,9 +447,9 @@ router.post('/logout', function (req, res) {
     expiry: today,
     updation: today,
   };
-  let sql3 = 'UPDATE user_view SET ? WHERE email = ?';
-  let query3 = sqlQuery(sql3, [sess, email]);
-  query3.then(function (err) {
+  let sql = 'UPDATE user_view SET ? WHERE email = ?';
+  let query = sqlQuery(sql, [sess, email]);
+  query.then(function (err) {
     if (err) {
       res.json({
         ResponseMsg: err,
@@ -532,29 +534,290 @@ router.post('/updateprofile', function(req,res){
     
 });
 
-router.post('/myvisits', function(req,res){
-    
-});
-
-router.post('/mybookings', function(req,res){
-    
-});
-
 router.post('/host', function(req,res){
-    
+  let data = req.body;
+  let today = new Date();
+  let sql = 'SELECT user_id FROM users where mobile = ?';
+  let query = sqlQuery(sql, [data.mobile]);
+  query.then((result) => {
+    let dish = {
+      user_id: result[0].user_id,
+      dish_name: data.dish_name,
+      dish_type: data.dish_type,
+      cuisine_type: data.cuisine_type,
+      temperature: data.temperature,
+      ingredients: data.ingredients,
+      meal_time: data.meal_time,
+      max_customers: data.max_customers,
+      base_price: data.base_price,
+      payment_mode: data.payment_mode,
+      creation: today,
+      updation: today
+    }
+    let sql1 = 'INSERT INTO hosting_view SET ?';
+    let query1 = sqlQuery(sql1, [dish]);
+    query1.then(() => {
+        res.json({
+          ResponseMsg: 'Dish hosted Successfully',
+          ResponseFlag: 'S'
+        });
+    }).catch(function(err) {
+        res.json({
+            ResponseMsg                 : err,
+            ResponseFlag                : 'F'
+        });
+    });
+  }).catch(function(err) {
+    res.status(422).json({
+        status                      : err,
+        ResponseMsg                 : 'Invalid request data',
+        ResponseFlag                : 'F'
+    });
+  });
 });
 
 router.post('/book', function(req,res){
-    
+  let data = req.body;
+  let today = new Date();
+  let sql = 'SELECT user_id FROM users where mobile = ?';
+  let query = sqlQuery(sql, [data.mobile]);
+  query.then((result) => {
+    if(data.promo_id){
+      var book = {
+        user_id: result[0].user_id,
+        booking_id: data.booking_id,
+        acquaintance: data.acquaintance,
+        promo_id: data.promo_id,
+        base_price: data.base_price,
+        final_price: data.final_price,
+        payment_mode: data.payment_mode,
+        creation: today,
+        updation: today
+      }
+      let sql1 = 'INSERT INTO booking_view SET ?';
+      let query1 = sqlQuery(sql1, [book]);
+      let promoUsed = {
+        promo_redeemed: data.promo_redeemed,
+        redeemed_on: today,
+        updation: today
+      }
+      let sql2 = 'UPDATE promo_user SET ? WHERE promo_id = ?';
+      let query2 = sqlQuery(sql2, [promoUsed,data.promo_id]);
+      Promise.all([query1, query2]).then(() => {
+        res.json({
+          ResponseMsg: 'Booked Successfully',
+          ResponseFlag: 'S'
+        });
+      }).catch(function(err) {
+          res.json({
+              ResponseMsg                 : err,
+              ResponseFlag                : 'F'
+          });
+      }); 
+    }else {
+      var book = {
+        user_id: result[0].user_id,
+        booking_id: data.booking_id,
+        aquaintance: data.aquaintance,
+        base_price: data.base_price,
+        final_price: data.final_price,
+        payment_mode: data.payment_mode,
+        creation: today,
+        updation: today
+      }
+      let sql1 = 'INSERT INTO booking_view SET ?';
+      let query1 = sqlQuery(sql1, [book]);
+      query1.then(() => {
+        res.json({
+          ResponseMsg: 'Booked Successfully',
+          ResponseFlag: 'S'
+        });
+      }).catch(function(err) {
+          res.json({
+              ResponseMsg                 : err,
+              ResponseFlag                : 'F'
+          });
+      });
+    }
+  }).catch(function(err) {
+    res.status(422).json({
+        status                      : err,
+        ResponseMsg                 : 'Invalid request data',
+        ResponseFlag                : 'F'
+    });
+  });
 });
 
-function randomString(length, chars) {
+router.post('booking/payment', function(req,res){
+  let today = new Date();
+  let data = req.body;
+  let sql = 'SELECT is_paid FROM booking_view WHERE booking_id = ?';
+  let query = sqlQuery(sql, [data.booking_id]);
+  query.then((result) => {
+    if(result[0].is_paid && result[0].payment_mode !== 'Cash'){
+      res.json({
+        ResponseMsg: 'You\'ve already paid by' + result[0].payment_mode ,
+        ResponseFlag: 'S'
+      });
+    }else {
+      let paid = {
+        is_paid: '1',
+        payment_mode: data.payment_mode,
+        payment_time: today,
+        updation: today
+      }
+      let sql1 = 'UPDATE booking_view SET ? WHERE booking_id = ?';
+      let query1 = sqlQuery(sql1, [paid, data.booking_id]);
+      query1.then(() => {
+        res.json({
+          ResponseMsg: 'Payment done Successfully',
+          ResponseFlag: 'S'
+        });
+      }).catch(function(err) {
+        res.json({
+            ResponseMsg                 : err,
+            ResponseFlag                : 'F'
+        });
+      });
+    }
+  }).catch((err) => {
+    res.json({
+      ResponseMsg                 : err,
+      ResponseFlag                : 'F'
+    });
+  });
+});
+
+router.post('/checkin', function(req,res){
+  let today = new Date();
+  let data = req.body;
+  let sql = 'SELECT has_checked_in FROM booking WHERE booking_id = ?';
+  let query = sqlQuery(sql, [data.booking_id]);
+  query.then((result) => {
+    if(result[0].has_checked_in){
+      res.json({
+        ResponseMsg: 'You\'ve already checked in at' + result[0].checkin_time ,
+        ResponseFlag: 'S'
+      });
+    }else {
+      let checkIn = {
+        has_checked_in: '1',
+        checkin_time: today
+      }
+      let sql1 = 'UPDATE booking SET ? WHERE booking_id = ?';
+      let query1 = sqlQuery(sql1, [checkIn, data.booking_id]);
+      query1.then(() => {
+        res.json({
+          ResponseMsg: 'Checked In Successfully',
+          ResponseFlag: 'S'
+        });
+      }).catch(function(err) {
+        res.json({
+            ResponseMsg                 : err,
+            ResponseFlag                : 'F'
+        });
+      });
+    }
+  }).catch((err) => {
+    res.json({
+      ResponseMsg                 : err,
+      ResponseFlag                : 'F'
+    });
+  });
+});
+
+router.post('/booking/cancel', function(req,res){
+  let today = new Date();
+  let data = req.body;
+  let sql = 'SELECT is_cancelled FROM booking WHERE booking_id = ?';
+  let query = sqlQuery(sql, [data.booking_id]);
+  query.then((result) => {
+    if(result[0].is_cancelled){
+      res.json({
+        ResponseMsg: 'You\'ve already cancelled' + result[0].cancellation_time ,
+        ResponseFlag: 'S'
+      });
+    }else {
+      let cancel = {
+        is_cancelled: '1',
+        cancellation_time: today
+      }
+      let sql1 = 'UPDATE booking SET ? WHERE booking_id = ?';
+      let query1 = sqlQuery(sql1, [cancel, data.booking_id]);
+      query1.then(() => {
+        res.json({
+          ResponseMsg: 'Cancelled Successfully',
+          ResponseFlag: 'S'
+        });
+      }).catch(function(err) {
+        res.json({
+            ResponseMsg                 : err,
+            ResponseFlag                : 'F'
+        });
+      });
+    }
+  }).catch((err) => {
+    res.json({
+      ResponseMsg                 : err,
+      ResponseFlag                : 'F'
+    });
+  });
+});
+
+router.post('/dish/ratings', function(req,res){
+  let today = new Date();
+  let data = req.body;
+  let sql = 'SELECT has_checked_in FROM booking WHERE booking_id = ?';
+  let query = sqlQuery(sql, [data.booking_id]);
+  query.then(() => {
+    if(result[0].has_checked_in){
+      let rating = {
+        dish_rating: data.dish_rating,
+        updation: today
+      }
+      let sql1 = 'UPDATE booking SET ? WHERE booking_id = ?';
+      let query1 = sqlQuery(sql1, [rating, data.booking_id]);
+      query1.then(() => {
+        res.json({
+          ResponseMsg: 'Thank You for your feedback',
+          ResponseFlag: 'S'
+        });
+      }).catch(function(err) {
+        res.json({
+            ResponseMsg                 : err,
+            ResponseFlag                : 'F'
+        });
+      });
+    }
+    else {
+      res.json({
+        ResponseMsg: 'You need to Checkin before you can rate the dish',
+        ResponseFlag: 'F'
+      })
+    }
+  }).catch((err) => {
+    res.json({
+      ResponseMsg                 : err,
+      ResponseFlag                : 'F'
+    });
+  });
+});
+
+router.post('/myhostings', function(req,res){
+      
+});
+
+router.post('/myvisits', function(req,res){
+  
+});
+
+function emailGenerator(length, chars) {
   var result = '';
   for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
   return result;
 }
 
-function randomNumber() {
+function otpGenerator() {
   var val = Math.floor(1000 + Math.random() * 9000);
   return val;
 }
@@ -562,7 +825,8 @@ function randomNumber() {
 function signAndStore(req, results) {
   var user1 = {
     mobile: results[0].mobile,
-    email: results[0].email
+    email: results[0].email,
+    user_id: results[0].user_id
   }
   jwt.sign({user: user1}, process.env.LOGIN_SECRET, {expiresIn: '60s'}, (err, token) => {
     let today = new Date();
@@ -589,6 +853,7 @@ function signAndStore(req, results) {
         res.json({
           ResponseMsg: 'Logged In',
           ResponseFlag: 'S',
+          UserId: id,
           token: token
         });
       }
@@ -600,7 +865,7 @@ function sqlQuery(sql, args) {
   return new Promise(function (resolve, reject) {
     db.query(sql, args, function (err, result) {
       if (err)
-        reject(err);
+        return reject(err);
       resolve(result);
     });
   });
@@ -618,7 +883,6 @@ function hashAndStore(newUser, res) {
         newUser.pass = hash;
         let sql = 'INSERT INTO users SET ?';
         let query = sqlQuery(sql, [newUser]);
-        console.log(query);
         query.then(function (result) {
           res.json({
             result: result,
@@ -628,6 +892,22 @@ function hashAndStore(newUser, res) {
         });
       }
     });
+  });
+}
+
+function bookQuery(){
+  let sql1 = 'INSERT INTO booking_view SET ?';
+  let query1 = sqlQuery(sql1, [book]);
+  query1.then(() => {
+      res.json({
+        ResponseMsg: 'Booked Successfully',
+        ResponseFlag: 'S'
+      });
+  }).catch(function(err) {
+      res.json({
+          ResponseMsg                 : err,
+          ResponseFlag                : 'F'
+      });
   });
 }
 

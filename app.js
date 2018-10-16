@@ -1,4 +1,4 @@
-require('dotenv').config({path: './env'});
+require('dotenv').config({path: 'C:\\Users\\lappy\\Api\\nodekb\\.env'});
 
 const express = require('express');
 const bodyParser = require('body-parser');
