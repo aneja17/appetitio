@@ -813,7 +813,9 @@ router.post('/myvisits', function(req,res){
 
 function emailGenerator(length, chars) {
   var result = '';
-  for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+  for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * 
+
+chars.length)];
   return result;
 }
 
@@ -892,22 +894,6 @@ function hashAndStore(newUser, res) {
         });
       }
     });
-  });
-}
-
-function bookQuery(){
-  let sql1 = 'INSERT INTO booking_view SET ?';
-  let query1 = sqlQuery(sql1, [book]);
-  query1.then(() => {
-      res.json({
-        ResponseMsg: 'Booked Successfully',
-        ResponseFlag: 'S'
-      });
-  }).catch(function(err) {
-      res.json({
-          ResponseMsg                 : err,
-          ResponseFlag                : 'F'
-      });
   });
 }
 
