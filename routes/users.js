@@ -534,7 +534,7 @@ router.post('/updateprofile', function(req,res){
     
 });
 
-router.post('/host', function(req,res){
+router.post('/dish', function(req,res){
   let data = req.body;
   let today = new Date();
   let sql = 'SELECT user_id FROM users where mobile = ?';
@@ -547,18 +547,14 @@ router.post('/host', function(req,res){
       cuisine_type: data.cuisine_type,
       temperature: data.temperature,
       ingredients: data.ingredients,
-      meal_time: data.meal_time,
-      max_customers: data.max_customers,
-      base_price: data.base_price,
-      payment_mode: data.payment_mode,
       creation: today,
       updation: today
     }
-    let sql1 = 'INSERT INTO hosting_view SET ?';
+    let sql1 = 'INSERT INTO owner_dishes SET ?';
     let query1 = sqlQuery(sql1, [dish]);
     query1.then(() => {
         res.json({
-          ResponseMsg: 'Dish hosted Successfully',
+          ResponseMsg: 'Dish Saved Successfully',
           ResponseFlag: 'S'
         });
     }).catch(function(err) {
@@ -576,6 +572,74 @@ router.post('/host', function(req,res){
   });
 });
 
+router.post('/host', function(req,res){
+  let data = req.body;
+  let today = new Date();
+  let host = {
+    meal_time: data.meal_time,
+    max_customers: data.max_customers,
+    base_price: data.base_price,
+    dish_id: JSON.stringify(data.dish_id),
+    creation: today,
+    updation: today
+  }
+  let sql = 'INSERT INTO hosting_view SET ?';
+  let query = sqlQuery(sql, [host]);
+  query.then(() => {
+    res.json({
+      ResponseMsg: 'Booked Successfully',
+      ResponseFlag: 'S'
+    });
+  }).catch((err) => {
+    res.json({
+      ResponseMsg                 : err,
+      ResponseFlag                : 'F'
+    });
+    return;
+  });
+  // let sql1 = 'SELECT event_id FROM booking WHERE meal_time = ?';
+  // let query1 = sqlQuery(sql1, [data.meal_time]);
+  // query1.then((result) => {
+  //     let event = {
+  //       event_id: result[0].event_id,
+  //       dish_id: JSON.stringify(data.dish_id),
+  //       creation: today,
+  //       updation: today
+  //     }
+  //     let sql2 = 'INSERT INTO event SET ?';
+  //     let query2 = sqlQuery(sql2, [event]);
+  //     Promise.all([query,query2]).then(() => {
+        // res.json({
+        //   ResponseMsg: 'Booked Successfully',
+        //   ResponseFlag: 'S'
+        // });
+  //     }).catch(function(err) {
+  //         let q = true;
+  //         while(q){
+  //           let sql3 = 'DELETE FROM booking WHERE event_id = ?';
+  //           let query3 = sqlQuery(sql3, [result[0].event_id]);
+  //           let condition = query3.then((result) => {
+  //             return result;
+  //           });
+  //           if(condition){
+  //             q = false;
+  //           }
+  //         }
+  //         res.json({
+  //             ResponseMsg                 : err,
+  //             ResponseFlag                : 'F'
+  //         });
+  //         return;
+  //     });
+  // }).catch(function(err) {
+  //     res.json({
+  //         ResponseMsg                 : err,
+  //         ResponseFlag                : 'F'
+  //     });
+  //     return;
+  // }); 
+});
+
 router.post('/book', function(req,res){
   let data = req.body;
   let today = new Date();
@@ -585,12 +649,11 @@ router.post('/book', function(req,res){
     if(data.promo_id){
       var book = {
         user_id: result[0].user_id,
-        booking_id: data.booking_id,
+        event_id: data.event_id,
         acquaintance: data.acquaintance,
         promo_id: data.promo_id,
         base_price: data.base_price,
         final_price: data.final_price,
-        payment_mode: data.payment_mode,
         creation: today,
         updation: today
       }
@@ -617,11 +680,10 @@ router.post('/book', function(req,res){
     }else {
       var book = {
         user_id: result[0].user_id,
-        booking_id: data.booking_id,
+        event_id: data.event_id,
         aquaintance: data.aquaintance,
         base_price: data.base_price,
         final_price: data.final_price,
-        payment_mode: data.payment_mode,
         creation: today,
         updation: today
       }
@@ -651,7 +713,7 @@ router.post('/book', function(req,res){
 router.post('booking/payment', function(req,res){
   let today = new Date();
   let data = req.body;
-  let sql = 'SELECT is_paid FROM booking_view WHERE booking_id = ?';
+  let sql = 'SELECT is_paid FROM booking WHERE booking_id = ?';
   let query = sqlQuery(sql, [data.booking_id]);
   query.then((result) => {
     if(result[0].is_paid && result[0].payment_mode !== 'Cash'){
@@ -666,7 +728,7 @@ router.post('booking/payment', function(req,res){
         payment_time: today,
         updation: today
       }
-      let sql1 = 'UPDATE booking_view SET ? WHERE booking_id = ?';
+      let sql1 = 'UPDATE booking SET ? WHERE booking_id = ?';
       let query1 = sqlQuery(sql1, [paid, data.booking_id]);
       query1.then(() => {
         res.json({
@@ -771,12 +833,13 @@ router.post('/dish/ratings', function(req,res){
   let query = sqlQuery(sql, [data.booking_id]);
   query.then(() => {
     if(result[0].has_checked_in){
-      let rating = {
+      let rAndC = {
         dish_rating: data.dish_rating,
+        comments: data.comments,
         updation: today
       }
-      let sql1 = 'UPDATE booking SET ? WHERE booking_id = ?';
-      let query1 = sqlQuery(sql1, [rating, data.booking_id]);
+      let sql1 = 'UPDATE customer_event SET ? WHERE booking_id = ?';
+      let query1 = sqlQuery(sql1, [rAndC, data.booking_id]);
       query1.then(() => {
         res.json({
           ResponseMsg: 'Thank You for your feedback',
