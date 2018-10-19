@@ -30,8 +30,8 @@ app.use(session({
   // cookie: { secure: true }
 }));
 
-let users = require('./routes/users');
-app.use('/users', users);
+let router = require('./routes/router');
+app.use('/users', router);
 
 //start server
 app.listen(process.env.SERVER_PORT, function () {
