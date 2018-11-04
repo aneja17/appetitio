@@ -1,30 +1,24 @@
-//Format of Token
-//Authorization: Token <access_token>
+const authService = require('../services/authService');
+const authValidator = require('../validators/authValidation');
 
-//verify token
-function verifyToken(req, res, next) {
-    //get the auth header
-    const tokenHeader = req.headers['authorization'];
-    //check if token is undefined.
-    console.log(tokenHeader);
-    if (typeof tokenHeader !== 'undefined') {
-      //split at the space
-      const split = tokenHeader.split(' ');
-      //get token from array
-      const token = split[1];
-      //set the token
-      req.token = token;
-      //next middleware
-      next();
-    } else {
-      //Forbidden
-      res.status(403).json({
-        ResponseMsg: 'Forbidden',
-        ResponseFlag: 'F'
-      });
-    }
+function login(req, res) {
+  let data = req.body;
+  authService.loginUser(data, res);
+}
+
+function changePassword(req,res){
+  let data = req.body;
+  let valid = authValidator.changePasswordValidate(data);
+  authService.changeUserPassword(valid, res);
+}
+
+function logout(req, res) {
+  let info = req.body;
+  authService.logoutUser(info, res);
 }
 
 module.exports = {
-    verifyToken
+  login,
+  changePassword,
+  logout
 }

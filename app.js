@@ -30,8 +30,20 @@ app.use(session({
   // cookie: { secure: true }
 }));
 
-let router = require('./routes/router');
-app.use('/users', router);
+let regRouter = require('./routes/registration');
+app.use('/users', regRouter);
+
+let loginRouter = require('./routes/login');
+app.use('/users', loginRouter);
+
+let userRouter = require('./routes/user');
+app.use('/users', userRouter);
+
+let hostRouter = require('./routes/host');
+app.use('/users', hostRouter);
+
+let customerRouter = require('./routes/customer');
+app.use('/users', customerRouter);
 
 //start server
 app.listen(process.env.SERVER_PORT, function () {
