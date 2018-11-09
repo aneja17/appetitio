@@ -1,4 +1,3 @@
-
 function getDish(data, res){
     let id = Number(data.id);
     let configBuffer = fs.readFileSync(path.resolve(__dirname, `../dishes/meta${id}.json`), 'utf-8');
@@ -9,7 +8,7 @@ function getDish(data, res){
         cuisine: configBuffer.attributes.cuisine,
     }
     res.json({
-        ResponseMsg: 'Welcome..',
+        ResponseMsg: 'Dish',
         ResponseFlag: 'S',
         dish: dish
     });

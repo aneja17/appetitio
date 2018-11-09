@@ -2,21 +2,11 @@ require('dotenv').config({path: 'C:\\Users\\lappy\\Api\\nodekb\\.env'});
 
 const express = require('express');
 const bodyParser = require('body-parser');
-const mysql = require('mysql');
 const session = require('express-session');
 //init app
 const app = express();
-let db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
-});
 
-db.connect(function (err) {
-  if (err) throw err;
-  console.log('Connected to MySql');
-});
+require('./database/db');
 
 //body-parser middleware
 app.use(bodyParser.urlencoded({extended: false}));
@@ -33,7 +23,7 @@ app.use(session({
 let regRouter = require('./routes/registration');
 app.use('/users', regRouter);
 
-let loginRouter = require('./routes/login');
+let loginRouter = require('./routes/auth');
 app.use('/users', loginRouter);
 
 let userRouter = require('./routes/user');
@@ -47,7 +37,5 @@ app.use('/users', customerRouter);
 
 //start server
 app.listen(process.env.SERVER_PORT, function () {
-  console.log('Server started at 3000');
+  console.log(`Server started at ${process.env.SERVER_PORT}`);
 });
-
-global.db = db;

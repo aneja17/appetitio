@@ -123,8 +123,8 @@ function signAndStore(req, results, sql, resMsg, res) {
     device_token: token,
     is_active: '1',
     expiry: expiryDate,
-    creation: today,
-    updation: today,
+    sess_creation: today,
+    sess_updation: today,
     };
     let id = results[0].user_id;
     let data = [sess, id];
@@ -186,7 +186,7 @@ function logoutUser(info, res){
       device_token: '',
       is_active: '0',
       expiry: today,
-      updation: today,
+      sess_updation: today,
     };
     let sql = 'UPDATE user_view SET ? WHERE email = ?';
     let data = [sess, info.email];

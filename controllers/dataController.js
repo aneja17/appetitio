@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const dataService = require('../services/dataService');
-const dishes = require('../config/data_records_27638.json');
+const dishes = require('../config/ingredients.json');
 
 //verifyToken is a middleware function
 function home(req, res) {
