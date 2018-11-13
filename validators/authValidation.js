@@ -2,8 +2,9 @@ const Joi = require('joi');
 
 function loginValidate(data){
     const loginSchema = Joi.object().keys({
-        mobile: Joi.string().length(10).required(),
-        pass: Joi.string().required()
+        mobile: Joi.number().required(),
+        pass: Joi.string().min(7).strict().required(),
+        device_type: Joi.number().required()
       });
     return Joi.validate(data, loginSchema);
 }

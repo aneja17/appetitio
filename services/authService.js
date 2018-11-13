@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const authValidator = require('../validators/authValidation');
 const utility = require('./utilityService');
 
@@ -8,13 +9,7 @@ function loginUser(data, res){
         valid.then(function (value) {
           let sql = 'SELECT * FROM users WHERE mobile = ?';
           let query = utility.sqlQuery(sql, [mobile]);
-          query.then(function (err, results) {
-            if (err) {
-              res.json({
-                ResponseMsg: err,
-                ResponseFlag: 'F'
-              });
-            }
+          query.then(function (results) {
             if (results.length <= 0) {
               res.json({
                 ResponseMsg: 'User doesn\'t exists',
@@ -28,6 +23,7 @@ function loginUser(data, res){
                     ResponseMsg: err,
                     ResponseFlag: 'F'
                   });
+                  return;
                 }
                 if (isMatch) {
                   if (results[0].is_blocked) {
@@ -45,7 +41,7 @@ function loginUser(data, res){
                     let resMsg = 'Logged In Successfully';
                     signAndStore(req, results, sql, resMsg, res);
                   }
-                } else {
+                }else {
                   res.json({
                     ResponseMsg: 'Password is Wrong',
                     ResponseFlag: 'F'
@@ -53,7 +49,17 @@ function loginUser(data, res){
                 }
               });
             }
+          }).catch((err) => {
+                res.json({
+                    ResponseMsg: err,
+                    ResponseFlag: 'F'
+                });
           });
+        }).catch((err) => {
+            res.json({
+                ResponseMsg: err,
+                ResponseFlag: 'F'
+            });
         });
     }
     else if (data.fb_social_id && data.fb_access_token) {
@@ -69,13 +75,7 @@ function loginUser(data, res){
             .then(fbRes => {
                 let sql = 'SELECT * FROM users WHERE email = ?';
                 let query = utility.sqlQuery(sql, [fbRes.email]);
-                query.then(function (err, results) {
-                    if (err) {
-                        res.json({
-                        ResponseMsg: err,
-                        ResponseFlag: 'F'
-                        });
-                    }
+                query.then(function (results) {
                     if (!results.length > 0) {
                         res.json({
                         ResponseMsg: 'User doesn\'t exists',
@@ -99,6 +99,11 @@ function loginUser(data, res){
                         signAndStore(req, results, sql, resMsg, res);
                         }
                     }
+                }).catch((err) => {
+                    res.json({
+                        ResponseMsg: err,
+                        ResponseFlag: 'F'
+                    });
                 });
             });
     }
@@ -129,21 +134,18 @@ function signAndStore(req, results, sql, resMsg, res) {
     let id = results[0].user_id;
     let data = [sess, id];
     let query = sqlQuery(sql, data);
-    query.then(function (err) {
-        if (err) {
-            res.json({
-            ResponseMsg: err,
-            ResponseFlag: 'F'
-            });
-            return;
-        } else {
-            res.json({
+    query.then(function () {
+        res.json({
             ResponseMsg: resMsg,
             ResponseFlag: 'S',
             UserId: id,
             token: token
-            });
-        }
+        });
+    }).catch((err) => {
+        res.json({
+            ResponseMsg: err,
+            ResponseFlag: 'F'
+        });
     });
 }
 
@@ -155,18 +157,16 @@ function changeUserPassword(valid, res){
         let sql = 'UPDATE users SET ? WHERE mobile = ?';
         let data = [newPassword, value.mobile];
         let query = utility.sqlQuery(sql, data);
-        query.then(function(err){
-            if(err){
-                res.json({
-                    ResponseMsg     : err,
-                    ResponseFlag    : 'F'
-                });
-            } else {
-                res.json({
-                    ResponseMsg: 'Password Updated',
-                    ResponseFlag: 'S'
-                });
-            }
+        query.then(function(){
+            res.json({
+                ResponseMsg: 'Password Updated',
+                ResponseFlag: 'S'
+            });
+        }).catch((err) => {
+            res.json({
+                ResponseMsg     : err,
+                ResponseFlag    : 'F'
+            });
         });
     }).catch(function(err) {
         // send a 422 error response if validation fails
@@ -192,18 +192,16 @@ function logoutUser(info, res){
     let data = [sess, info.email];
     let query = utility.sqlQuery(sql, data);
     query.then(function (err) {
-      if (err) {
-        res.json({
-          ResponseMsg: err,
-          ResponseFlag: 'F'
-        });
-        return;
-      } else {
         res.json({
           ResponseMsg: 'Logged Out',
           ResponseFlag: 'S'
         });
-      }
+    }).catch((err) => {
+        res.json({
+            ResponseMsg: err,
+            ResponseFlag: 'F'
+        });
+        return;
     });
   
     // let sql1 = 'UPDATE users SET fb_access_token = ? WHERE email = ?';

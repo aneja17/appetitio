@@ -6,7 +6,7 @@ router.post('/register', regUserController.register);
 
 router.get('/emailverfication', regUserController.emailVerify);
 
-router.post('/otpverfication', regUserController.otpVerify);
+router.post('/otpverification', regUserController.otpVerify);
 
 router.post('/emailauthentication', regUserController.emailAuth);
 
