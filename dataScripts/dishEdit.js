@@ -9,7 +9,7 @@ for(let id=1; id<=27638; id++){
         number += "0";
     }
     number += id.toString();
-    configBuffer[id] = fs.readFileSync(path.resolve(__dirname, `./dishes/meta${number}.json`), 'utf-8');
+    configBuffer[id] = fs.readFileSync(path.resolve(__dirname, `../dishes/meta${number}.json`), 'utf-8');
     ab = JSON.parse(configBuffer[id]);
     dish[id] = {
         name: ab.name,
@@ -17,5 +17,5 @@ for(let id=1; id<=27638; id++){
         attributes: ab.attributes,
     }
     dish[id] = JSON.stringify(dish[id]);
-    fs.writeFileSync(path.resolve(__dirname, `./dishes/meta${number}.json`), dish[id], 'utf-8');
+    fs.writeFileSync(path.resolve(__dirname, `../dishes/meta${number}.json`), dish[id], 'utf-8');
 }

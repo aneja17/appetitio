@@ -17,7 +17,7 @@ function loginUser(data, res){
               });
             } else {
               //match password
-              bcrypt.compare(data.pass, results[0].pass, function (err, isMatch) {
+              bcrypt.compare(value.pass, results[0].pass, function (err, isMatch) {
                 if (err) {
                   res.json({
                     ResponseMsg: err,
@@ -37,9 +37,9 @@ function loginUser(data, res){
                         ResponseFlag: 'F'
                       }); 
                   } else {
-                    let sql = 'INSERT INTO user_session SET ? WHERE user_id = ?';
+                    let sql = 'INSERT INTO user_session SET ?';
                     let resMsg = 'Logged In Successfully';
-                    signAndStore(req, results, sql, resMsg, res);
+                    signAndStore(value, results, sql, resMsg, res);
                   }
                 }else {
                   res.json({
@@ -94,9 +94,9 @@ function loginUser(data, res){
                             ResponseFlag: 'F'
                         });
                         } else {
-                        let sql = 'INSERT INTO user_session SET ? WHERE user_id = ?';
+                        let sql = 'INSERT INTO user_session SET ?';
                         let resMsg = 'Logged In Successfully';
-                        signAndStore(req, results, sql, resMsg, res);
+                        signAndStore(data, results, sql, resMsg, res);
                         }
                     }
                 }).catch((err) => {
@@ -109,7 +109,7 @@ function loginUser(data, res){
     }
 }
 
-function signAndStore(req, results, sql, resMsg, res) {
+function signAndStore(info, results, sql, resMsg, res) {
     var user1 = {
         mobile: results[0].mobile,
         email: results[0].email,
@@ -122,23 +122,24 @@ function signAndStore(req, results, sql, resMsg, res) {
     let expiresIn = '60s';
     let token = utility.signature(obj, logInSecret, expiresIn);
     let today = new Date();
-    let expiryDate = new Date(new Date().getTime() + (hours * 60 * 60 * 1000));
+    let days = 30;
+    let expiryDate = new Date(new Date().getTime() + (days * 24 * 60 * 60 * 1000));
     let sess = {
-    device_type: req.body.device_type,
-    device_token: token,
-    is_active: '1',
-    expiry: expiryDate,
-    sess_creation: today,
-    sess_updation: today,
+        id_user: results[0].user_id,
+        device_type: info.device_type,
+        device_token: token,
+        is_active: '1',
+        expiry: expiryDate,
+        sess_creation: today,
+        sess_updation: today,
     };
-    let id = results[0].user_id;
-    let data = [sess, id];
-    let query = sqlQuery(sql, data);
-    query.then(function () {
+    let data = [sess];
+    let query = utility.sqlQuery(sql, data);
+    query.then((value) => {
         res.json({
             ResponseMsg: resMsg,
             ResponseFlag: 'S',
-            UserId: id,
+            UserId: results[0].user_id,
             token: token
         });
     }).catch((err) => {

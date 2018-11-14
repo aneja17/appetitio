@@ -27,8 +27,8 @@ function hashAndStore(sql, data, resMsg, res) {
         bcrypt.hash(data.pass, salt, function (err, hash) {
             if (err) {
                 res.json({
-                ResponseMsg: err,
-                ResponseFlag: 'F'
+                    ResponseMsg: err,
+                    ResponseFlag: 'F'
                 });
             } else {
                 data.pass = hash;
@@ -43,21 +43,16 @@ function hashAndStore(sql, data, resMsg, res) {
                     res.json({
                         ResponseMsg: err,
                         ResponseFlag: 'F'
-                        });
+                    });
                 });
             }
         });
     });
 }
 
-function signature(obj, Secret, expiresIn){
-    jwt.sign(obj, Secret, {expiresIn: expiresIn}, (err, token) => {
-        if(err) {
-            return err;
-        } else {
-            return token;
-        }
-    });
+function signature(obj, Secret, expiresin){
+    let token = jwt.sign(obj, Secret, {expiresIn: expiresin});
+    return token;
 }
 //Format of Token
 //Authorization: Token <access_token>

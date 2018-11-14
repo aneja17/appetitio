@@ -5,7 +5,7 @@ const utility = require('../services/utilityService');
 
 router.post('/home', utility.verifyToken, dataController.home);
 
-router.post('/getDish', dataController.dish);
+router.post('/getdish', dataController.dish);
 
 router.post('/fetchprofile', function(req,res){
 
