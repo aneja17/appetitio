@@ -8,7 +8,7 @@ function mealBooking(info, res){
     query.then((result) => {
       if(info.promo_id){
         var book = {
-          user_id: result[0].user_id,
+          customer_id: result[0].user_id,
           event_id: info.event_id,
           acquaintance: info.acquaintance,
           promo_id: info.promo_id,
@@ -41,7 +41,7 @@ function mealBooking(info, res){
         }); 
       }else {
         var book = {
-          user_id: result[0].user_id,
+          customer_id: result[0].user_id,
           event_id: info.event_id,
           aquaintance: info.aquaintance,
           base_price: info.base_price,

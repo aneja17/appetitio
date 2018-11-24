@@ -50,6 +50,21 @@ function hashAndStore(sql, data, resMsg, res) {
     });
 }
 
+function hash(data){
+    return new Promise(function (resolve, reject) {
+        bcrypt.genSalt(10, function (err, salt) {
+            bcrypt.hash(data.pass, salt, function (err, hash) {
+                if (err) {
+                    return reject(err);
+                } else {
+                    data.pass = hash;
+                    return resolve(data);
+                }
+            });
+        }); 
+    });
+}
+
 function signature(obj, Secret, expiresin){
     let token = jwt.sign(obj, Secret, {expiresIn: expiresin});
     return token;
@@ -85,7 +100,7 @@ module.exports = {
     stringGenerator,
     numberGenerator,
     sqlQuery,
-    hashAndStore,
+    hash,
     signature,
     verifyToken
 }

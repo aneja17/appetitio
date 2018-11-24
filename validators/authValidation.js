@@ -18,7 +18,15 @@ function changePasswordValidate(data){
     return Joi.validate(data, passSchema);
 }
 
+function logoutValidate(data){
+    const passSchema = Joi.object().keys({
+        mobile                          : Joi.number().required(),
+    });
+    return Joi.validate(data, passSchema);
+}
+
 module.exports = {
     loginValidate,
-    changePasswordValidate
+    changePasswordValidate,
+    logoutValidate
 }

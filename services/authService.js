@@ -153,20 +153,28 @@ function signAndStore(info, results, sql, resMsg, res) {
 function changeUserPassword(valid, res){
     valid.then(function(value){
         let newPassword = {
-            pass : value.password
+            pass : value.pass
         };
-        let sql = 'UPDATE users SET ? WHERE mobile = ?';
-        let data = [newPassword, value.mobile];
-        let query = utility.sqlQuery(sql, data);
-        query.then(function(){
-            res.json({
-                ResponseMsg: 'Password Updated',
-                ResponseFlag: 'S'
+        newPassword = utility.hash(newPassword);
+        newPassword.then((results) => {
+            let sql = 'UPDATE users SET ? WHERE mobile = ?';
+            let data = [results, value.mobile];
+            let query = utility.sqlQuery(sql, data);
+            query.then(function(){
+                res.json({
+                    ResponseMsg: 'Password Updated',
+                    ResponseFlag: 'S'
+                });
+            }).catch((err) => {
+                res.json({
+                    ResponseMsg     : err,
+                    ResponseFlag    : 'F'
+                });
             });
         }).catch((err) => {
             res.json({
-                ResponseMsg     : err,
-                ResponseFlag    : 'F'
+                ResponseMsg: err,
+                ResponseFlag: 'F'
             });
         });
     }).catch(function(err) {
@@ -180,29 +188,46 @@ function changeUserPassword(valid, res){
 }
 
 function logoutUser(info, res){
-    let today = new Date();
-    let sess = {
-      fb_access_token: '',
-      device_type: '0',
-      device_token: '',
-      is_active: '0',
-      expiry: today,
-      sess_updation: today,
-    };
-    let sql = 'UPDATE user_view SET ? WHERE email = ?';
-    let data = [sess, info.email];
-    let query = utility.sqlQuery(sql, data);
-    query.then(function (err) {
-        res.json({
-          ResponseMsg: 'Logged Out',
-          ResponseFlag: 'S'
+    info.then((value) => {
+        let sql = 'SELECT user_id FROM users WHERE mobile = ?';
+        let data = [value.mobile];
+        let query = utility.sqlQuery(sql, data);
+        query.then((results) => {
+            let today = new Date();
+            let sess = {
+            is_active: '0',
+            sess_updation: today,
+            };
+            let sql1 = 'UPDATE user_session SET ? WHERE id_user = ?';
+            console.log(results[0].user_id);
+            let data1 = [sess, results[0].user_id];
+            let query1 = utility.sqlQuery(sql1, data1);
+            query1.then(function (result) {
+                res.json({
+                ResponseMsg: 'Logged Out',
+                ResponseFlag: 'S'
+                });
+            }).catch((err) => {
+                res.json({
+                    ResponseMsg: err,
+                    ResponseFlag: 'F'
+                });
+                return;
+            });
+        }).catch((err) => {
+            res.json({
+                ResponseMsg: err,
+                ResponseFlag: 'F'
+            });
+            return;
         });
-    }).catch((err) => {
-        res.json({
-            ResponseMsg: err,
-            ResponseFlag: 'F'
+    }).catch(function(err) {
+        // send a 422 error response if validation fails
+        res.status(422).json({
+            status                      : err,
+            ResponseMsg                 : 'Invalid request data',
+            ResponseFlag                : 'F'
         });
-        return;
     });
   
     // let sql1 = 'UPDATE users SET fb_access_token = ? WHERE email = ?';

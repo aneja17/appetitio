@@ -14,7 +14,8 @@ function changePassword(req,res){
 
 function logout(req, res) {
   let info = req.body;
-  authService.logoutUser(info, res);
+  let valid = authValidator.logoutValidate(info);
+  authService.logoutUser(valid, res);
 }
 
 module.exports = {

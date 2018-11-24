@@ -41,7 +41,27 @@ function registerFbUser(fbRes, value, res){
         };
         let sql = 'INSERT INTO users SET ?';
         let resMsg = 'User registered Successfully';
-        utility.hashAndStore(sql, newUser, resMsg, res);
+        let data = utility.hash(newUser);
+        data.then((value) => {
+            let query = utility.sqlQuery(sql, [value]);
+            query.then(function (result) {
+                res.json({
+                    result: result,
+                    ResponseMsg: resMsg,
+                    ResponseFlag: 'S'
+                });
+            }).catch((err) => {
+                res.json({
+                    ResponseMsg: err,
+                    ResponseFlag: 'F'
+                });
+            });
+        }).catch((err) => {
+            res.json({
+                ResponseMsg: err,
+                ResponseFlag: 'F'
+            });
+        });
     } else {
         res.json({
         ResponseMsg: 'Wrong fb credentials',
@@ -66,7 +86,27 @@ function registerNewUser(value, res){
     }
     let sql = 'INSERT INTO users SET ?';
     let resMsg = 'User registered Successfully';
-    utility.hashAndStore(sql, newUser, resMsg, res);
+    let data = utility.hash(newUser);
+    data.then((value) => {
+        let query = utility.sqlQuery(sql, [value]);
+        query.then(function (result) {
+            res.json({
+                result: result,
+                ResponseMsg: resMsg,
+                ResponseFlag: 'S'
+            });
+        }).catch((err) => {
+            res.json({
+                ResponseMsg: err,
+                ResponseFlag: 'F'
+            });
+        });
+    }).catch((err) => {
+        res.json({
+            ResponseMsg: err,
+            ResponseFlag: 'F'
+        });
+    });
 }
 
 module.exports = {
