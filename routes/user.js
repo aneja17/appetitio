@@ -3,9 +3,11 @@ const router = express.Router();
 const dataController = require('../controllers/dataController');
 const utility = require('../services/utilityService');
 
-router.post('/home', utility.verifyToken, dataController.home);
+router.post('/home', utility.splitHeader, dataController.home);
 
-router.post('/getdish', dataController.dish);
+router.post('/getdish', utility.splitHeader, dataController.dish);
+
+router.post('/getevent', utility.splitHeader, dataController.event);
 
 router.post('/fetchprofile', function(req,res){
 

@@ -7,61 +7,107 @@ function mealBooking(info, res){
     let query = utility.sqlQuery(sql, data);
     query.then((result) => {
       if(info.promo_id){
-        var book = {
+        var book1 = {
           customer_id: result[0].user_id,
-          event_id: info.event_id,
           acquaintance: info.acquaintance,
           promo_id: info.promo_id,
           base_price: info.base_price,
           final_price: info.final_price,
-          creation: today,
-          updation: today
+          booking_creation: today,
+          booking_updation: today
         }
-        let sql1 = 'INSERT INTO booking_view SET ?';
-        let data1 = [book];
+        let sql1 = 'INSERT INTO booking_customer SET ?';
+        let data1 = [book1];
         let query1 = utility.sqlQuery(sql1, data1);
-        let promoUsed = {
-          promo_redeemed: info.promo_redeemed,
-          redeemed_on: today,
-          updation: today
-        }
-        let sql2 = 'UPDATE promo_user SET ? WHERE promo_id = ?';
-        let data2 = [promoUsed,info.promo_id];
-        let query2 = utility.sqlQuery(sql2, data2);
-        Promise.all([query1, query2]).then(() => {
-          res.json({
-            ResponseMsg: 'Booked Successfully',
-            ResponseFlag: 'S'
-          });
-        }).catch(function(err) {
+        let sql = 'SELECT MAX(booking_id) FROM booking_customer WHERE customer_id = ?';
+        let data = [result[0].user_id];
+        let query = utility.sqlQuery(sql, data);
+        query.then((resp) => {
+          var book2 = {
+            event_id: info.event_id,
+            id_booking: resp[0].booking_id,
+            event_creation: today,
+            event_updation: today
+          }
+          let sql2 = 'INSERT INTO customer_event SET ?';
+          let data2 = [book2];
+          let query2 = utility.sqlQuery(sql2, data2);
+          let promoUsed = {
+            promo_redeemed: info.promo_redeemed,
+            redeemed_on: today,
+            updation: today
+          }
+          let sql3 = 'UPDATE promo_user SET ? WHERE promo_id = ?';
+          let data3 = [promoUsed,info.promo_id];
+          let query3 = utility.sqlQuery(sql3, data3);
+          Promise.all([query2, query3]).then(() => {
             res.json({
+              ResponseMsg: 'Booked Successfully',
+              ResponseFlag: 'S'
+            });
+          }).catch(function(err) {
+            let sql4 = 'DELETE booking_customer, customer_event FROM booking_customer INNER JOIN customer_event WHERE booking_customer.booking_id = customer_event.id_booking and booking_customer.booking_id = ?';
+            let data4 = [resp[0].booking_id];
+            let query4 = utility.sqlQuery(sql4, data4);
+            query4.then(() => {
+              res.json({
                 ResponseMsg                 : err,
                 ResponseFlag                : 'F'
+              });
+            }).catch((err) => {
+              res.json({
+                ResponseMsg                 : err,
+                ResponseFlag                : 'F'
+              });
             });
+          }); 
+        }).catch((err) => {
+          res.json({
+            ResponseMsg                 : err,
+            ResponseFlag                : 'F'
+          });
         }); 
       }else {
-        var book = {
+        var book1 = {
           customer_id: result[0].user_id,
-          event_id: info.event_id,
           aquaintance: info.aquaintance,
           base_price: info.base_price,
           final_price: info.final_price,
-          creation: today,
-          updation: today
+          booking_creation: today,
+          booking_updation: today
         }
-        let sql1 = 'INSERT INTO booking_view SET ?';
-        let data1 = [book];
+        let sql1 = 'INSERT INTO booking_customer SET ?';
+        let data1 = [book1];
         let query1 = utility.sqlQuery(sql1, data1);
-        query1.then(() => {
-          res.json({
-            ResponseMsg: 'Booked Successfully',
-            ResponseFlag: 'S'
+        let sql = 'SELECT MAX(booking_id) FROM booking_customer WHERE customer_id = ?';
+        let data = [result[0].user_id];
+        let query = utility.sqlQuery(sql, data);
+        query.then((resp) => {
+          var book2 = {
+            event_id: info.event_id,
+            id_booking: resp[0].booking_id,
+            event_creation: today,
+            event_updation: today
+          }
+          let sql2 = 'INSERT INTO customer_event SET ?';
+          let data2 = [book2];
+          let query2 = utility.sqlQuery(sql2, data2);
+          Promise.all([query1, query2]).then(() => {
+            res.json({
+              ResponseMsg: 'Booked Successfully',
+              ResponseFlag: 'S'
+            });
+          }).catch(function(err) {
+              res.json({
+                  ResponseMsg                 : err,
+                  ResponseFlag                : 'F'
+              });
           });
         }).catch(function(err) {
-            res.json({
-                ResponseMsg                 : err,
-                ResponseFlag                : 'F'
-            });
+          res.json({
+              ResponseMsg                 : err,
+              ResponseFlag                : 'F'
+          });
         });
       }
     }).catch(function(err) {

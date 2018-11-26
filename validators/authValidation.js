@@ -4,7 +4,8 @@ function loginValidate(data){
     const loginSchema = Joi.object().keys({
         mobile: Joi.number().required(),
         pass: Joi.string().min(7).strict().required(),
-        device_type: Joi.number().required()
+        device_type: Joi.number().required(),
+        device_token: Joi.string().required()
       });
     return Joi.validate(data, loginSchema);
 }
@@ -20,7 +21,7 @@ function changePasswordValidate(data){
 
 function logoutValidate(data){
     const passSchema = Joi.object().keys({
-        mobile                          : Joi.number().required(),
+        access_token                    : Joi.string().required()
     });
     return Joi.validate(data, passSchema);
 }

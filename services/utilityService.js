@@ -72,12 +72,10 @@ function signature(obj, Secret, expiresin){
 //Format of Token
 //Authorization: Token <access_token>
 
-//verify token
-function verifyToken(req, res, next) {
+function splitHeader(req, res, next) {
     //get the auth header
     const tokenHeader = req.headers['authorization'];
     //check if token is undefined.
-    console.log(tokenHeader);
     if (typeof tokenHeader !== 'undefined') {
       //split at the space
       const split = tokenHeader.split(' ');
@@ -96,11 +94,44 @@ function verifyToken(req, res, next) {
     }
 }
 
+//verifyToken is a middleware function
+function verifyToken(req){
+    return new Promise(function (resolve, reject) {
+        jwt.verify(req.token, process.env.LOGIN_SECRET, function (err, authData) {
+            if (err) {
+              return reject(err);
+            } else {
+              return resolve(authData);
+            }
+        });
+    });
+}
+
+function loggedIn(info){
+    return new Promise(function (resolve, reject){
+        let sql = 'SELECT is_active, expiry FROM user_session WHERE access_token = ?';
+        let data = [info.access_token];
+        let query = sqlQuery(sql, data);
+        query.then((result) => {
+            if(result[0].is_active == 1){
+                return resolve(true);
+            }
+            else {
+                return reject(false);
+            }
+        }).catch((err) => {
+            return reject(false);
+        });
+    });
+}
+
 module.exports = {
     stringGenerator,
     numberGenerator,
     sqlQuery,
     hash,
     signature,
-    verifyToken
+    splitHeader,
+    verifyToken,
+    loggedIn
 }

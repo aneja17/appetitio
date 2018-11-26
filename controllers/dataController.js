@@ -1,30 +1,47 @@
-const jwt = require('jsonwebtoken');
 const dataService = require('../services/dataService');
 const dishes = require('../dishes/meta00001.json');
+const utility = require('../services/utilityService');
 
-//verifyToken is a middleware function
 function home(req, res) {
-  jwt.verify(req.token, process.env.LOGIN_SECRET, function (err, authData) {
-    if (err) {
-      console.log(err);
-      res.sendStatus(403);
-    } else {
-      res.json({
-        ResponseMsg: 'Welcome..',
-        ResponseFlag: 'S',
-        authData: authData,
-        dishes: dishes
-      });
-    }
+  let data = req.body;
+  let tokenVerified = utility.verifyToken(req);
+  let loggedIn = utility.loggedIn(data);
+  Promise.all([tokenVerified, loggedIn]).then((authData) => {
+    res.json({
+      ResponseMsg: 'Welcome..',
+      ResponseFlag: 'S',
+      authData: authData,
+      dishes: dishes
+    });
+  }).catch((err) => {
+    res.sendStatus(403);
   });
 }
 
 function dish(req, res){
   let data = req.body;
-  dataService.getDish(data, res);
+  let tokenVerified = utility.verifyToken(req);
+  let loggedIn = utility.loggedIn(data);
+  Promise.all([tokenVerified, loggedIn]).then((authData) => {
+    dataService.getDish(data, res);
+  }).catch((err) => {
+    res.sendStatus(403);
+  });
+}
+
+function event(req, res){
+  let data = req.body;
+  let tokenVerified = utility.verifyToken(req);
+  let loggedIn = utility.loggedIn(data);
+  Promise.all([tokenVerified, loggedIn]).then((authData) => {
+    dataService.getEvent(data, res);
+  }).catch((err) => {
+    res.sendStatus(403);
+  });
 }
 
 module.exports = {
     home,
-    dish
+    dish,
+    event
 }

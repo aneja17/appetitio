@@ -96,7 +96,7 @@ function loginUser(data, res){
                         } else {
                         let sql = 'INSERT INTO user_session SET ?';
                         let resMsg = 'Logged In Successfully';
-                        signAndStore(data, results, sql, resMsg, res);
+                        signAndStore(value, results, sql, resMsg, res);
                         }
                     }
                 }).catch((err) => {
@@ -110,31 +110,32 @@ function loginUser(data, res){
 }
 
 function signAndStore(info, results, sql, resMsg, res) {
+    let today = new Date();
     var user1 = {
         mobile: results[0].mobile,
         email: results[0].email,
-        user_id: results[0].user_id
+        user_id: results[0].user_id,
     }
     let obj = {
         user: user1
     }
     let logInSecret = process.env.LOGIN_SECRET;
-    let expiresIn = '60s';
+    let expiresIn = '2592000s';
     let token = utility.signature(obj, logInSecret, expiresIn);
-    let today = new Date();
     let days = 30;
     let expiryDate = new Date(new Date().getTime() + (days * 24 * 60 * 60 * 1000));
-    let sess = {
+    let sess1 = {
         id_user: results[0].user_id,
         device_type: info.device_type,
-        device_token: token,
+        device_token: info.device_token,
+        access_token: token,
         is_active: '1',
         expiry: expiryDate,
         sess_creation: today,
         sess_updation: today,
     };
-    let data = [sess];
-    let query = utility.sqlQuery(sql, data);
+    let data1 = [sess1];
+    let query = utility.sqlQuery(sql, data1);
     query.then((value) => {
         res.json({
             ResponseMsg: resMsg,
@@ -189,30 +190,18 @@ function changeUserPassword(valid, res){
 
 function logoutUser(info, res){
     info.then((value) => {
-        let sql = 'SELECT user_id FROM users WHERE mobile = ?';
-        let data = [value.mobile];
-        let query = utility.sqlQuery(sql, data);
-        query.then((results) => {
-            let today = new Date();
-            let sess = {
-            is_active: '0',
-            sess_updation: today,
-            };
-            let sql1 = 'UPDATE user_session SET ? WHERE id_user = ?';
-            console.log(results[0].user_id);
-            let data1 = [sess, results[0].user_id];
-            let query1 = utility.sqlQuery(sql1, data1);
-            query1.then(function (result) {
-                res.json({
-                ResponseMsg: 'Logged Out',
-                ResponseFlag: 'S'
-                });
-            }).catch((err) => {
-                res.json({
-                    ResponseMsg: err,
-                    ResponseFlag: 'F'
-                });
-                return;
+        let today = new Date();
+        let sess = {
+        is_active: '0',
+        sess_updation: today,
+        };
+        let sql1 = 'UPDATE user_session SET ? WHERE access_token = ?';
+        let data1 = [sess, value.access_token];
+        let query1 = utility.sqlQuery(sql1, data1);
+        query1.then(function (result) {
+            res.json({
+            ResponseMsg: 'Logged Out',
+            ResponseFlag: 'S'
             });
         }).catch((err) => {
             res.json({
@@ -229,50 +218,6 @@ function logoutUser(info, res){
             ResponseFlag                : 'F'
         });
     });
-  
-    // let sql1 = 'UPDATE users SET fb_access_token = ? WHERE email = ?';
-    // let query1 = utility.sqlQuery(sql1, ['', email]);
-    // query1.then(function(err) {
-    //     if(err){
-    //         res.json({
-    //             message         : err
-    //         });
-    //         return;
-    //     }
-    // });
-    // let sql2 = 'SELECT user_id FROM users WHERE email = ?';
-    // let query2 = utility.sqlQuery(sql2, email);
-    // query2.then(function(err, result){
-    //     if(err){
-    //         res.json({
-    //             message: err
-    //         });
-    //         return;
-    //     } else {
-    //         let today                   = new Date();
-    //         let sess                    = {
-    //             device_type             : '0',
-    //             device_token            : '',
-    //             is_active               : '0',
-    //             expiry                  : today,
-    //             updation                : today,
-    //         };
-    //         let sql3 = 'UPDATE user_session SET ? WHERE user_id = ?';
-    //         let query3 = utility.sqlQuery(sql3, [sess, result[0].user_id]);
-    //         query3.then(function(err){
-    //             if(err){
-    //                 res.json({
-    //                     message: err
-    //                 });
-    //                 return;
-    //             } else {
-    //                 res.json({
-    //                     message         : 'Logged Out'
-    //                 });
-    //             }
-    //         });
-    //     }
-    // });
 }
 
 module.exports = {
