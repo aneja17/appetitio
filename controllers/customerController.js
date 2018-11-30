@@ -1,6 +1,17 @@
 const customerService = require('../services/customerService');
 const utility = require('../services/utilityService');
 
+function checkPromo(req, res){
+    let info = req.body;
+    let tokenVerified = utility.verifyToken(req);
+    let loggedIn = utility.loggedIn(info);   
+    Promise.all([tokenVerified, loggedIn]).then((authData) => {
+        customerService.promoCheck(info, res);
+    }).catch((err) => {
+        res.sendStatus(403);
+    });
+}
+
 function bookMeal(req,res){
     let info = req.body;
     let tokenVerified = utility.verifyToken(req);
@@ -61,5 +72,6 @@ module.exports = {
     bookingPayment,
     bookingCheckin,
     cancelBooking,
-    rateDish
+    rateDish,
+    checkPromo
 }

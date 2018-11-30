@@ -3,6 +3,8 @@ const router = express.Router();
 const customerController = require('../controllers/customerController');
 const utility = require('../services/utilityService');
 
+router.post('/checkPromo', utility.splitHeader, customerController.checkPromo);
+
 router.post('/book', utility.splitHeader, customerController.bookMeal);
 
 router.post('/booking/payment', utility.splitHeader, customerController.bookingPayment);

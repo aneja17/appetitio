@@ -3,15 +3,34 @@ const dishes = require('../dishes/meta00001.json');
 const utility = require('../services/utilityService');
 
 function home(req, res) {
-  let data = req.body;
+  let info = req.body;
   let tokenVerified = utility.verifyToken(req);
-  let loggedIn = utility.loggedIn(data);
+  let loggedIn = utility.loggedIn(info);
   Promise.all([tokenVerified, loggedIn]).then((authData) => {
-    res.json({
-      ResponseMsg: 'Welcome..',
-      ResponseFlag: 'S',
-      authData: authData,
-      dishes: dishes
+    let promo_codes = [];
+    let w=0;
+    let sql = `SELECT promo_code FROM promo_user WHERE user_id = (SELECT user_id FROM users WHERE mobile = ${info.mobile})`;
+    let data = [info.mobile];
+    let query = utility.sqlQuery(sql, data);
+    query.then((result) => {
+      for(let i=0; i<result.length; i++){
+        promo_codes.push(result[i].promo_code);
+        ++w;
+        if(w == result.length){
+          res.json({
+            ResponseMsg: 'Welcome..',
+            ResponseFlag: 'S',
+            authData: authData,
+            promo_codes: promo_codes,
+            dishes: dishes,
+          });
+        }
+      }
+    }).catch((err) => {
+      res.json({
+        ResponseMsg : err,
+        ResponseFlag : 'F'
+      });
     });
   }).catch((err) => {
     res.sendStatus(403);

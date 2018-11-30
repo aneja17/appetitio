@@ -51,18 +51,16 @@ function hashAndStore(sql, data, resMsg, res) {
 }
 
 function hash(data){
-    return new Promise(function (resolve, reject) {
         bcrypt.genSalt(10, function (err, salt) {
-            bcrypt.hash(data.pass, salt, function (err, hash) {
+            bcrypt.hash(data, salt, function (err, hash) {
                 if (err) {
-                    return reject(err);
+                    return err;
                 } else {
-                    data.pass = hash;
-                    return resolve(data);
+                    data = hash;
+                    return data;
                 }
             });
         }); 
-    });
 }
 
 function signature(obj, Secret, expiresin){

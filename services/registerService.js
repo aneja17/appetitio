@@ -41,20 +41,14 @@ function registerFbUser(fbRes, value, res){
         };
         let sql = 'INSERT INTO users SET ?';
         let resMsg = 'User registered Successfully';
-        let data = utility.hash(newUser);
-        data.then((value) => {
-            let query = utility.sqlQuery(sql, [value]);
-            query.then(function (result) {
-                res.json({
-                    result: result,
-                    ResponseMsg: resMsg,
-                    ResponseFlag: 'S'
-                });
-            }).catch((err) => {
-                res.json({
-                    ResponseMsg: err,
-                    ResponseFlag: 'F'
-                });
+        newUser.pass = utility.hash(newUser.pass);
+        let data = [newUser];
+        let query = utility.sqlQuery(sql, [data]);
+        query.then(function (result) {
+            res.json({
+                result: result,
+                ResponseMsg: resMsg,
+                ResponseFlag: 'S'
             });
         }).catch((err) => {
             res.json({
@@ -86,20 +80,14 @@ function registerNewUser(value, res){
     }
     let sql = 'INSERT INTO users SET ?';
     let resMsg = 'User registered Successfully';
-    let data = utility.hash(newUser);
-    data.then((value) => {
-        let query = utility.sqlQuery(sql, [value]);
-        query.then(function (result) {
-            res.json({
-                result: result,
-                ResponseMsg: resMsg,
-                ResponseFlag: 'S'
-            });
-        }).catch((err) => {
-            res.json({
-                ResponseMsg: err,
-                ResponseFlag: 'F'
-            });
+    newUser.pass = utility.hash(newUser.pass);
+    let data = [newUser];
+    let query = utility.sqlQuery(sql, [data]);
+    query.then(function (result) {
+        res.json({
+            result: result,
+            ResponseMsg: resMsg,
+            ResponseFlag: 'S'
         });
     }).catch((err) => {
         res.json({
