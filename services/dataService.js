@@ -31,7 +31,7 @@ function getEvent(info, res){
     let eventDetails = {};
     let dishDetails = {};
     let ownerDetails = {};
-    let sql = 'SELECT event_id, max_customers, base_price FROM booking WHERE meal_date >= ? and meal_time > ?';
+    let sql = 'SELECT event_id, max_customers, base_price FROM booking WHERE meal_date >= ? and meal_time > ? and is_cancelled == 0';
     let data = [now.getDate, (now.getMilliseconds + 7200000)];
     let query = utility.sqlQuery(sql, data);
     query.then((result1) => {

@@ -9,19 +9,29 @@ function home(req, res) {
   Promise.all([tokenVerified, loggedIn]).then((authData) => {
     let promo_codes = [];
     let w=0;
-    let sql = `SELECT promo_code FROM promo_user WHERE user_id = (SELECT user_id FROM users WHERE mobile = ${info.mobile})`;
+    let sql = `SELECT promo_code, promo_redeemed FROM promo_user WHERE user_id = (SELECT user_id FROM users WHERE mobile = ${info.mobile})`;
     let data = [info.mobile];
     let query = utility.sqlQuery(sql, data);
     query.then((result) => {
       for(let i=0; i<result.length; i++){
-        promo_codes.push(result[i].promo_code);
-        ++w;
-        if(w == result.length){
+        if(result[i].promo_redeemed == 0){
+          promo_codes.push(result[i].promo_code);
+          ++w;
+          if(w == result.length){
+            res.json({
+              ResponseMsg: 'Welcome..',
+              ResponseFlag: 'S',
+              authData: authData,
+              promo_codes: promo_codes,
+              dishes: dishes,
+            });
+          }
+        }else {
           res.json({
             ResponseMsg: 'Welcome..',
             ResponseFlag: 'S',
             authData: authData,
-            promo_codes: promo_codes,
+            promo_codes: 'No promo codes right now',
             dishes: dishes,
           });
         }

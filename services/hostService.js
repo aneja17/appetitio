@@ -1,6 +1,6 @@
 const utility = require('./utilityService');
 
-function dishSave(info, res){
+function saveDish(info, res){
     let today = new Date();
     let sql = 'SELECT user_id FROM users where mobile = ?';
     let data = [info.mobile];
@@ -39,7 +39,7 @@ function dishSave(info, res){
     });
 }
 
-function dishHost(info, res){
+function hostEvent(info, res){
     let today = new Date();
     let sql5 = 'SELECT user_id FROM users WHERE mobile = ?';
     let data5 = [info.mobile];
@@ -117,7 +117,47 @@ function dishHost(info, res){
     });
 }
 
+function cancelMeal(info, res){
+  let today = new Date();
+  let sql = 'SELECT is_cancelled FROM booking WHERE event_id = ?';
+  let data = [info.event_id]
+  let query = utility.sqlQuery(sql, data);
+  query.then((result) => {
+    if(result[0].is_cancelled){
+      res.json({
+        ResponseMsg: 'You\'ve already cancelled' + result[0].cancellation_time ,
+        ResponseFlag: 'S'
+      });
+    }else {
+      let cancel = {
+        is_cancelled: '1',
+        cancellation_time: today
+      }
+      let sql1 = 'UPDATE booking SET ? WHERE event_id = ?';
+      let data1 = [cancel, info.event_id]
+      let query1 = utility.sqlQuery(sql1, data1);
+      query1.then(() => {
+        res.json({
+          ResponseMsg: 'Event Cancelled Successfully',
+          ResponseFlag: 'S'
+        });
+      }).catch(function(err) {
+        res.json({
+            ResponseMsg                 : err,
+            ResponseFlag                : 'F'
+        });
+      });
+    }
+  }).catch((err) => {
+    res.json({
+      ResponseMsg                 : err,
+      ResponseFlag                : 'F'
+    });
+  });
+}
+
 module.exports = {
-    dishSave,
-    dishHost
+    saveDish,
+    hostEvent,
+    cancelMeal
 }

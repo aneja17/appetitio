@@ -2,7 +2,7 @@ const utility = require('./utilityService');
 
 function promoCheck(info, res){
   let now = new Date();
-  let sql = 'SELECT promo_id, promo_code FROM promo_user WHERE user_id = (SELECT user_id FROM users where mobile = ?) and promo_expiry > ?';
+  let sql = 'SELECT promo_id, promo_code, promo_redeemed FROM promo_user WHERE user_id = (SELECT user_id FROM users where mobile = ?) and promo_expiry > ?';
   let data = [info.mobile, now];
   let query = utility.sqlQuery(sql, data);
   query.then((result) => {
@@ -13,7 +13,13 @@ function promoCheck(info, res){
           promo_id : element.promo_id,
           ResponseFlag : 'S'
         });
-      }else {
+      } else if(element.promo_redeemed == 1){
+        res.json({
+          ResponseMsg : 'Promo can\'t be applied',
+          ResponseFlag : 'F'
+        });
+      }
+      else {
         res.json({
           ResponseMsg : 'Promo Doesn\'t exist',
           ResponseFlag : 'F'
@@ -47,7 +53,7 @@ function mealBooking(info, res){
       let sql1 = 'INSERT INTO booking_customer SET ?';
       let data1 = [book1];
       let query1 = utility.sqlQuery(sql1, data1);
-      let sql = 'SELECT MAX(booking_id) FROM booking_customer WHERE customer_id = ?';
+      let sql = 'SELECT booking_id FROM booking_customer WHERE customer_id = ? and booking_creation BETWEEN timestamp(DATE_SUB(NOW(), INTERVAL 1 MINUTE)) and timestamp(NOW())';
       let data = [result[0].user_id];
       let query = utility.sqlQuery(sql, data);
       query.then((resp) => {
@@ -60,6 +66,24 @@ function mealBooking(info, res){
         let sql2 = 'INSERT INTO customer_event SET ?';
         let data2 = [book2];
         let query2 = utility.sqlQuery(sql2, data2);
+        query2.catch(() => {
+          let sq = 'DELETE FROM booking_customer WHERE booking_id = ?';
+          let d = [resp[0].booking_id];
+          let qry = utility.sqlQuery(sq, d);
+          qry.then(() => {
+            res.json({
+              ResponseMsg                 : 'Error occured while booking, Please try again',
+              ResponseFlag                : 'F'
+            });
+            return;
+          }).catch((err) => {
+            res.json({
+              ResponseMsg                 : err,
+              ResponseFlag                : 'F'
+            });
+            return;
+          });
+        });
         let promoUsed = {
           promo_redeemed: 1,
           redeemed_on: today,
@@ -107,7 +131,7 @@ function mealBooking(info, res){
       let sql1 = 'INSERT INTO booking_customer SET ?';
       let data1 = [book1];
       let query1 = utility.sqlQuery(sql1, data1);
-      let sql = 'SELECT MAX(booking_id) FROM booking_customer WHERE customer_id = ?';
+      let sql = 'SELECT booking_id FROM booking_customer WHERE customer_id = ? and booking_creation BETWEEN timestamp(DATE_SUB(NOW(), INTERVAL 1 MINUTE)) and timestamp(NOW())';
       let data = [result[0].user_id];
       let query = utility.sqlQuery(sql, data);
       query.then((resp) => {
@@ -122,14 +146,25 @@ function mealBooking(info, res){
         let query2 = utility.sqlQuery(sql2, data2);
         Promise.all([query1, query2]).then(() => {
           res.json({
-            ResponseMsg: 'Booked Successfully',
+            BookingId : resp[0].booking_id,
+            ResponseMsg : 'Booked Successfully',
             ResponseFlag: 'S'
           });
         }).catch(function(err) {
+          let sql3 = 'DELETE booking_customer, customer_event FROM booking_customer INNER JOIN customer_event WHERE booking_customer.booking_id = customer_event.id_booking and booking_customer.booking_id = ?';
+          let data3 = [resp[0].booking_id];
+          let query3 = utility.sqlQuery(sql3, data3);
+          query3.then(() => {
             res.json({
-                ResponseMsg                 : err,
-                ResponseFlag                : 'F'
+              ResponseMsg                 : err,
+              ResponseFlag                : 'F'
             });
+          }).catch((err) => {
+            res.json({
+              ResponseMsg                 : err,
+              ResponseFlag                : 'F'
+            });
+          });
         });
       }).catch(function(err) {
         res.json({
@@ -190,7 +225,7 @@ function payment(info, res){
 
 function checkin(info, res){
   let today = new Date();
-  let sql = 'SELECT has_checked_in FROM booking WHERE booking_id = ?';
+  let sql = 'SELECT has_checked_in FROM booking_customer WHERE booking_id = ?';
   let data = [info.booking_id];
   let query = utility.sqlQuery(sql, data);
   query.then((result) => {
@@ -204,7 +239,7 @@ function checkin(info, res){
         has_checked_in: '1',
         checkin_time: today
       }
-      let sql1 = 'UPDATE booking SET ? WHERE booking_id = ?';
+      let sql1 = 'UPDATE booking_customer SET ? WHERE booking_id = ?';
       let data1 = [checkIn, info.booking_id];
       let query1 = utility.sqlQuery(sql1, data1);
       query1.then(() => {
@@ -229,7 +264,7 @@ function checkin(info, res){
 
 function cancel(info, res){
   let today = new Date();
-  let sql = 'SELECT is_cancelled FROM booking WHERE booking_id = ?';
+  let sql = 'SELECT is_cancelled FROM booking_customer WHERE booking_id = ?';
   let data = [info.booking_id]
   let query = utility.sqlQuery(sql, data);
   query.then((result) => {
@@ -243,7 +278,7 @@ function cancel(info, res){
         is_cancelled: '1',
         cancellation_time: today
       }
-      let sql1 = 'UPDATE booking SET ? WHERE booking_id = ?';
+      let sql1 = 'UPDATE booking_customer SET ? WHERE booking_id = ?';
       let data1 = [cancel, info.booking_id]
       let query1 = utility.sqlQuery(sql1, data1);
       query1.then(() => {
@@ -268,17 +303,17 @@ function cancel(info, res){
 
 function rate(info, res){
   let today = new Date();
-  let sql = 'SELECT has_checked_in FROM booking WHERE booking_id = ?';
+  let sql = 'SELECT has_checked_in FROM booking_customer WHERE booking_id = ?';
   let data = [info.booking_id];
   let query = utility.sqlQuery(sql, data);
-  query.then(() => {
+  query.then((result) => {
     if(result[0].has_checked_in){
       let rAndC = {
         dish_rating: info.dish_rating,
         comments: info.comments,
-        updation: today
+        event_updation: today
       }
-      let sql1 = 'UPDATE customer_event SET ? WHERE booking_id = ?';
+      let sql1 = 'UPDATE customer_event SET ? WHERE id_booking = ?';
       let data1 = [rAndC, info.booking_id];
       let query1 = utility.sqlQuery(sql1, data1);
       query1.then(() => {

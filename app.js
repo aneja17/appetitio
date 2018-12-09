@@ -20,6 +20,9 @@ app.use(session({
   // cookie: { secure: true }
 }));
 
+let taskScheduler = require('./scheduler');
+taskScheduler.task.start();
+
 let regRouter = require('./routes/registration');
 app.use('/users', regRouter);
 

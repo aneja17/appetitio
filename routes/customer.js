@@ -9,7 +9,7 @@ router.post('/book', utility.splitHeader, customerController.bookMeal);
 
 router.post('/booking/payment', utility.splitHeader, customerController.bookingPayment);
 
-router.post('/checkin', utility.splitHeader, customerController.bookingCheckin);
+router.post('/booking/checkin', utility.splitHeader, customerController.bookingCheckin);
 
 router.post('/booking/cancel', utility.splitHeader, customerController.cancelBooking);
 

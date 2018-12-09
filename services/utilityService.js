@@ -107,7 +107,7 @@ function verifyToken(req){
 
 function loggedIn(info){
     return new Promise(function (resolve, reject){
-        let sql = 'SELECT is_active, expiry FROM user_session WHERE access_token = ?';
+        let sql = 'SELECT is_active FROM user_session WHERE access_token = ?';
         let data = [info.access_token];
         let query = sqlQuery(sql, data);
         query.then((result) => {
