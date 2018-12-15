@@ -137,6 +137,12 @@ function signAndStore(info, results, sql, resMsg, res) {
     let data1 = [sess1];
     let query = utility.sqlQuery(sql, data1);
     query.then((value) => {
+        logger.log({
+            level : 'info',
+            message : 'Logged In',
+            userId : results[0].user_id,
+            timestamp : today
+        });
         res.json({
             ResponseMsg: resMsg,
             ResponseFlag: 'S',
@@ -144,6 +150,10 @@ function signAndStore(info, results, sql, resMsg, res) {
             token: token
         });
     }).catch((err) => {
+        logger.log({
+            level: 'error',
+            message: err
+        });
         res.json({
             ResponseMsg: err,
             ResponseFlag: 'F'

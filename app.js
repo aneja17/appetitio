@@ -20,6 +20,12 @@ app.use(session({
   // cookie: { secure: true }
 }));
 
+require('./config/winston');
+logger.log({
+  level : 'info',
+  message : 'Server Started'
+});
+
 let taskScheduler = require('./scheduler');
 taskScheduler.task.start();
 
