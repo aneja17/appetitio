@@ -1,4 +1,5 @@
-require('dotenv').config({path: 'C:\\Users\\lappy\\Api\\nodekb\\.env'});
+const path = require('path');
+require('dotenv').config({path: path.resolve(__dirname, './.env')});
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -21,10 +22,6 @@ app.use(session({
 }));
 
 require('./config/winston');
-logger.log({
-  level : 'info',
-  message : 'Server Started'
-});
 
 let taskScheduler = require('./scheduler');
 taskScheduler.task.start();
@@ -46,5 +43,9 @@ app.use('/users', customerRouter);
 
 //start server
 app.listen(process.env.SERVER_PORT, function () {
+  logger.log({
+    level : 'info',
+    message : 'Server Started'
+  });
   console.log(`Server started at ${process.env.SERVER_PORT}`);
 });
