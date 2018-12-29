@@ -78,7 +78,7 @@ function getEvent(info, res){
                                 res.json({
                                     ResponseMsg                 : 'Successful',
                                     ResponseFlag                : 'S',
-                                    Events                       : event
+                                    Events                      : event
                                 });
                             }
                         }).catch(function(err) {

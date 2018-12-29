@@ -65,9 +65,9 @@ function loginUser(data, res){
     else if (data.fb_social_id && data.fb_access_token) {
         var options = {
             method: 'GET',
-            uri: `https://graph.facebook.com/v2.8/${value.fb_social_id}`,
+            uri: `https://graph.facebook.com/v2.8/${data.fb_social_id}`,
             qs: {
-            access_token: value.fb_access_token,
+            access_token: data.fb_access_token,
             fields: 'email'
             }
         };
@@ -96,7 +96,7 @@ function loginUser(data, res){
                         } else {
                         let sql = 'INSERT INTO user_session SET ?';
                         let resMsg = 'Logged In Successfully';
-                        signAndStore(value, results, sql, resMsg, res);
+                        signAndStore(data, results, sql, resMsg, res);
                         }
                     }
                 }).catch((err) => {
