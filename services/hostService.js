@@ -54,7 +54,7 @@ function hostEvent(info, res){
       let data3 = [ownerId];
       let query3 = utility.sqlQuery(sql3, data3);
       query3.then(() => {
-        let sql = 'SELECT MAX(event_id) FROM owner_event WHERE user_id = ?';
+        let sql = 'SELECT event_id FROM owner_event WHERE user_id = ? and event_creation BETWEEN timestamp(DATE_SUB(NOW(), INTERVAL 1 MINUTE)) and timestamp(NOW())';
         let data = [results[0].user_id];
         let query = utility.sqlQuery(sql, data);
         query.then((result) => {
@@ -77,11 +77,13 @@ function hostEvent(info, res){
                   ResponseMsg                 : err,
                   ResponseFlag                : 'F'
                 });
+                return;
               }).catch((err) => {
                 res.json({
                   ResponseMsg                 : err,
                   ResponseFlag                : 'F'
                 });
+                return;
               });
             });
           }
