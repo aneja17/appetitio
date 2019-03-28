@@ -41,14 +41,22 @@ function registerFbUser(fbRes, value, res){
         };
         let sql = 'INSERT INTO users SET ?';
         let resMsg = 'User registered Successfully';
-        newUser.pass = utility.hash(newUser.pass);
-        let data = [newUser];
-        let query = utility.sqlQuery(sql, [data]);
-        query.then(function (result) {
-            res.json({
-                result: result,
-                ResponseMsg: resMsg,
-                ResponseFlag: 'S'
+        hashPassword = utility.hash(newUser.pass);
+        hashPassword.then((resul) => {
+            newUser.pass = resul;
+            let data = [newUser];
+            let query = utility.sqlQuery(sql, [data]);
+            query.then(function (result) {
+                res.json({
+                    result: result,
+                    ResponseMsg: resMsg,
+                    ResponseFlag: 'S'
+                });
+            }).catch((err) => {
+                res.json({
+                    ResponseMsg: err,
+                    ResponseFlag: 'F'
+                });
             });
         }).catch((err) => {
             res.json({
@@ -80,14 +88,22 @@ function registerNewUser(value, res){
     }
     let sql = 'INSERT INTO users SET ?';
     let resMsg = 'User registered Successfully';
-    newUser.pass = utility.hash(newUser.pass);
-    let data = [newUser];
-    let query = utility.sqlQuery(sql, [data]);
-    query.then(function (result) {
-        res.json({
-            result: result,
-            ResponseMsg: resMsg,
-            ResponseFlag: 'S'
+    hashPassword = utility.hash(newUser.pass);
+    hashPassword.then((resul) => {
+        newUser.pass = resul;
+        let data = [newUser];
+        let query = utility.sqlQuery(sql, data);
+        query.then(function (result) {
+            res.json({
+                result: result,
+                ResponseMsg: resMsg,
+                ResponseFlag: 'S'
+            });
+        }).catch((err) => {
+            res.json({
+                ResponseMsg: err,
+                ResponseFlag: 'F'
+            });
         });
     }).catch((err) => {
         res.json({

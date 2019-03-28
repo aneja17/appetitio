@@ -58,7 +58,7 @@ function hostEvent(info, res){
         let data = [results[0].user_id];
         let query = utility.sqlQuery(sql, data);
         query.then((result) => {
-          for(i=0; i< info.dish_id.toString().length - 1; i++){
+          for(i=0; i< info.dish_id.length; i++){
             let host1 = {
               event_id: result[0].event_id,
               dish_id: info.dish_id[i],

@@ -101,13 +101,19 @@ function getEvent(info, res){
                 });
             });
         }
+        if(result1.length == 0){
+            res.json({
+                ResponseMsg                 : 'No Events available right now',
+                ResponseFlag                : 'F'
+            });
+        }
     }).catch(function(err) {
         res.status(422).json({
             status                      : err,
-            ResponseMsg                 : 'Invalid request data',
+            ResponseMsg                 : 'Error',
             ResponseFlag                : 'F'
         });
-      });
+    });
 }
 
 module.exports = {

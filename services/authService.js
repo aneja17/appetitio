@@ -163,13 +163,13 @@ function signAndStore(info, results, sql, resMsg, res) {
 
 function changeUserPassword(valid, res){
     valid.then(function(value){
-        let newPassword = {
-            pass : value.pass
-        };
-        newPassword = utility.hash(newPassword);
-        newPassword.then((results) => {
+        hashPassword = utility.hash(value.pass);
+        hashPassword.then((resul) => {
+            let newPassword = {
+                pass : resul
+            };
             let sql = 'UPDATE users SET ? WHERE mobile = ?';
-            let data = [results, value.mobile];
+            let data = [newPassword, value.mobile];
             let query = utility.sqlQuery(sql, data);
             query.then(function(){
                 res.json({
@@ -184,8 +184,8 @@ function changeUserPassword(valid, res){
             });
         }).catch((err) => {
             res.json({
-                ResponseMsg: err,
-                ResponseFlag: 'F'
+                ResponseMsg     : err,
+                ResponseFlag    : 'F'
             });
         });
     }).catch(function(err) {

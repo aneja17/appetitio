@@ -12,6 +12,7 @@ function loginValidate(data){
 
 function changePasswordValidate(data){
     const passSchema = Joi.object().keys({
+        access_token                    : Joi.string().required(),
         mobile                          : Joi.number().required(),
         pass                            : Joi.string().min(7).strict(),
         confirm_pass                    : Joi.string().valid(Joi.ref('pass')).strict(),

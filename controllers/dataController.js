@@ -23,6 +23,7 @@ function home(req, res) {
               ResponseFlag: 'S',
               authData: authData,
               promo_codes: promo_codes,
+              promo_flag: 'pu',
               dishes: dishes,
             });
           }
@@ -36,10 +37,19 @@ function home(req, res) {
           });
         }
       }
+      if(result.length == 0){
+        res.json({
+        ResponseMsg: 'Welcome..',
+        ResponseFlag: 'S',
+        authData: authData,
+        promo_codes: 'No promo codes right now',
+        dishes: dishes,
+      });
+      }
     }).catch((err) => {
       res.json({
-        ResponseMsg : err,
-        ResponseFlag : 'F'
+        ResponseMsg: err,
+        ResponseFlag: 'F'
       });
     });
   }).catch((err) => {
