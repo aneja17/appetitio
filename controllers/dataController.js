@@ -23,7 +23,6 @@ function home(req, res) {
               ResponseFlag: 'S',
               authData: authData,
               promo_codes: promo_codes,
-              promo_flag: 'pu',
               dishes: dishes,
             });
           }
